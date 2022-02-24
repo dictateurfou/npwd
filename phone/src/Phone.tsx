@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { Fragment, useEffect, useState } from 'react';
 import './Phone.css';
 import { Route } from 'react-router-dom';
 import { CallModal } from '@os/call/components/CallModal';
@@ -31,9 +31,11 @@ import { useNoteListener } from './apps/notes/hooks/useNoteListener';
 import { PhoneSnackbar } from '@os/snackbar/components/PhoneSnackbar';
 import { useInvalidSettingsHandler } from './apps/settings/hooks/useInvalidSettingsHandler';
 import { useKeyboardService } from '@os/keyboard/hooks/useKeyboardService';
+import { useExternalApps } from '@common/hooks/useExternalApps';
 
 function Phone() {
   const { i18n } = useTranslation();
+  const externalApps = useExternalApps();
 
   const { apps } = useApps();
 
@@ -72,7 +74,11 @@ function Phone() {
               <Route exact path="/" component={HomeApp} />
               {callModal && <Route exact path="/call" component={CallModal} />}
               {apps.map((App) => (
-                <>{!App.isDisabled && <App.Route key={App.id} />}</>
+                <Fragment key={App.id}>{!App.isDisabled && <App.Route key={App.id} />}</Fragment>
+              ))}
+
+              {externalApps.map((App) => (
+                <Fragment key={App.id}>{App.Route}</Fragment>
               ))}
             </>
             <NotificationAlert />
