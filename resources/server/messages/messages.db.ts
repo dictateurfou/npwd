@@ -10,20 +10,31 @@ import { ResultSetHeader } from 'mysql2';
 const MESSAGES_PER_PAGE = 20;
 
 export class _MessagesDB {
+  getExisting() {}
+
   async getConversations(phoneNumber: string): Promise<MessageConversation[]> {
-    const query = `SELECT npwd_messages_conversations.id,
-                          npwd_messages_conversations.conversation_list as conversationList,
-                          npwd_messages_participants.unread_count       as unreadCount,
-                          npwd_messages_conversations.is_group_chat     as isGroupChat,
-                          npwd_messages_conversations.label,
-                          npwd_messages_participants.participant
-                   FROM npwd_messages_conversations
-                            INNER JOIN npwd_messages_participants
-                                       on npwd_messages_conversations.id = npwd_messages_participants.conversation_id
-                   WHERE npwd_messages_participants.participant = ?`;
+    //we have multiple option for opti request (better database architecture work with inner join and json one to many) or add limit on IN SELECT
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants,
+                          npwd_messages_participants.unread_count as unreadCount,
+                          npwd_messages_participants.id as participantId,
+                          npwd_messages_conversations.is_group_chat as isGroupChat,
+                          npwd_messages_conversations.label, npwd_messages_participants.number
+                          FROM npwd_messages_participants
+                          INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
+                          WHERE npwd_messages_participants.id
+                          IN (SELECT npwd_messages_conversations.participants
+                          FROM npwd_messages_conversations
+                          INNER JOIN npwd_messages_participants ON npwd_messages_participants.id = npwd_messages_conversations.participants
+                          WHERE number = ?) GROUP BY npwd_messages_conversations.id`;
 
     const [results] = await DbInterface._rawExec(query, [phoneNumber]);
-
+    console.log(results);
+    for (const v of <MessageConversation[]>results) {
+      v.participants = JSON.parse(String(v.participants));
+      for (let v2 of v.participants) {
+        v2 = v2.toString();
+      }
+    }
     return <MessageConversation[]>results;
   }
 
@@ -51,35 +62,41 @@ export class _MessagesDB {
 
   async createConversation(
     participants: string[],
-    conversationList: string,
     conversationLabel: string,
     isGroupChat: boolean,
   ) {
-    const conversationQuery = `INSERT INTO npwd_messages_conversations (conversation_list, label, is_group_chat)
-                               VALUES (?, ?, ?)`;
-    const participantQuery = `INSERT INTO npwd_messages_participants (conversation_id, participant)
-                              VALUES (?, ?)`;
+    //change all logique
 
-    const [results] = await DbInterface._rawExec(conversationQuery, [
-      conversationList,
+    const conversationQuery = `INSERT INTO npwd_messages_conversations (participants,label, is_group_chat)
+                               VALUES (?, ?, ?)`;
+    const participantQuery = `INSERT INTO npwd_messages_participants (id, number)
+                                VALUES (?, ?)`;
+
+    let participantId;
+    for (const participant of participants) {
+      if (participantId === undefined) {
+        participantId = await DbInterface.insert(
+          `INSERT INTO npwd_messages_participants (number) VALUES (?)`,
+          [participant],
+        );
+      } else {
+        await DbInterface._rawExec(participantQuery, [participantId, participant]);
+      }
+    }
+
+    const conversationId = await DbInterface.insert(conversationQuery, [
+      participantId,
       isGroupChat ? conversationLabel : '',
       isGroupChat,
     ]);
-    const result = <ResultSetHeader>results;
 
-    const conversationId = result.insertId;
-
-    for (const participant of participants) {
-      await DbInterface._rawExec(participantQuery, [conversationId, participant]);
-    }
-
-    return conversationId;
+    return [conversationId, participantId];
   }
 
   async addParticipantToConversation(conversationList: string, phoneNumber: string) {
     const conversationId = await this.getConversationId(conversationList);
 
-    const participantQuery = `INSERT INTO npwd_messages_participants (conversation_id, participant)
+    const participantQuery = `INSERT INTO npwd_messages_participants (id, number)
                               VALUES (?, ?)`;
 
     await DbInterface._rawExec(participantQuery, [conversationId, phoneNumber]);
@@ -116,13 +133,13 @@ export class _MessagesDB {
     await DbInterface._rawExec(query, [conversationId, tgtPhoneNumber]);
   }
 
-  async setMessageRead(conversationId: number, participantNumber: string) {
+  async setMessageRead(participantId: number, participantNumber: string) {
     const query = `UPDATE npwd_messages_participants
                    SET unread_count = 0
-                   WHERE conversation_id = ?
-                     AND participant = ?`;
+                   WHERE id = ?
+                     AND number = ?`;
 
-    await DbInterface._rawExec(query, [conversationId, participantNumber]);
+    await DbInterface._rawExec(query, [participantId, participantNumber]);
   }
 
   async deleteMessage(message: Message) {
@@ -142,36 +159,39 @@ export class _MessagesDB {
     await DbInterface._rawExec(query, [conversationId, phoneNumber]);
   }
 
-  async doesConversationExist(conversationList: string): Promise<boolean> {
-    const query = `SELECT COUNT(*) as count
-                   FROM npwd_messages_conversations
-                            INNER JOIN npwd_messages_participants
-                                       on npwd_messages_conversations.id = npwd_messages_participants.conversation_id
-                   WHERE conversation_list = ?`;
+  async doesConversationExist(participants: Array<string>): Promise<boolean> {
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants, COUNT(*) as count
+                          FROM npwd_messages_participants
+                          INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
+                          WHERE npwd_messages_participants.id GROUP BY npwd_messages_participants.id HAVING COUNT(*) = ?`;
 
-    const [results] = await DbInterface._rawExec(query, [conversationList]);
+    const [results] = await DbInterface._rawExec(query, [participants.length]);
     const result = <any>results;
-    const count = result[0].count;
 
-    return count > 0;
+    let checker = (arr: Array<any>, target: Array<any>) => target.every((v) => arr.includes(v));
+    for (const v of result) {
+      const participantsConv = JSON.parse(v.participants);
+      if (checker(participants, participantsConv) == true) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async doesConversationExistForPlayer(
-    conversationList: string,
+    participants: string,
     phoneNumber: string,
   ): Promise<boolean> {
-    const query = `SELECT COUNT(*) as count
-                   FROM npwd_messages_conversations
-                            INNER JOIN npwd_messages_participants
-                                       on npwd_messages_conversations.id = npwd_messages_participants.conversation_id
-                   WHERE conversation_list = ?
-                     AND npwd_messages_participants.participant = ?`;
+    //need treat of data because its more hard to identify if conversation exist ex if we have (555 + 666 + 777) and (555 + 666 + 777 + 888) require very complex sql request maybe nosql is more optimised for group of conversation one to many see mongodb
+    const conv = await this.getConversations(phoneNumber);
+    let have = false;
+    for (const v of conv) {
+      console.log(v.participants);
+    }
+    //const result = <any>results;
+    //const count = result[0].count;
 
-    const [results] = await DbInterface._rawExec(query, [conversationList, phoneNumber]);
-    const result = <any>results;
-    const count = result[0].count;
-
-    return count > 0;
+    return have;
   }
 
   // misc stuff

@@ -32,7 +32,7 @@ const MessagesList = (): any => {
   if (!conversations) return <p>No messages</p>;
 
   const handleClick = (conversation: MessageConversation) => () => {
-    setMessageRead(conversation.id);
+    setMessageRead(conversation.participantId);
     goToConversation(conversation);
   };
 

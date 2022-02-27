@@ -16,6 +16,7 @@ server_script {
 }
 
 ui_page 'resources/html/index.html'
+--ui_page 'http://localhost:3000/resources/html'
 
 files {
     'config.json',

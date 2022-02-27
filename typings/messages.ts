@@ -9,12 +9,18 @@ export interface Message {
 
 export interface PreDBMessage {
   conversationId: number;
-  conversationList: string;
+  participants: Array<string>;
+  participantId: number;
   tgtPhoneNumber: string;
   sourcePhoneNumber?: string;
   message?: string;
   is_embed?: boolean;
   embed?: any;
+}
+
+export interface PreDBConv {
+  conversationId: number;
+  message?: string;
 }
 
 export interface CreateMessageDTO {
@@ -28,9 +34,9 @@ export interface CreateMessageDTO {
 
 export interface MessageConversation {
   id: number;
-  conversationList: string;
   label: string;
-  participant?: string;
+  participantId: number;
+  participants: Array<string>;
   isGroupChat: boolean;
   unread?: number;
   unreadCount?: number;

@@ -11,9 +11,9 @@ interface MessageActionProps {
   removeLocalConversation: (conversationId: number[]) => void;
   updateLocalMessages: (messageDto: Message) => void;
   deleteLocalMessage: (messageId: number) => void;
-  setMessageReadState: (conversationId: number, unreadCount: number) => void;
-  getLabelOrContact: (messageConversation: MessageConversation) => string;
-  getConversationParticipant: (conversationList: string) => Contact | null;
+  setMessageReadState: (participantId: number, unreadCount: number) => void;
+  getLabelOrContact: (messageConversation: MessageConversation, number: string) => string;
+  getConversationParticipant: (conversationList: string[]) => Contact | null;
 }
 
 export const useMessageActions = (): MessageActionProps => {
@@ -34,11 +34,11 @@ export const useMessageActions = (): MessageActionProps => {
   );
 
   const setMessageReadState = useCallback(
-    (conversationId: number, unreadCount: number) => {
-      console.log(conversationId);
+    (participantId: number, unreadCount: number) => {
+      console.log(participantId);
       setMessageConversation((curVal) =>
         curVal.map((message: MessageConversation) => {
-          if (message.id === conversationId) {
+          if (message.participantId === participantId) {
             console.log('hello');
             return {
               ...message,
@@ -54,19 +54,18 @@ export const useMessageActions = (): MessageActionProps => {
   );
 
   const getLabelOrContact = useCallback(
-    (messageConversation: MessageConversation): string => {
+    (messageConversation: MessageConversation, phoneNumber: string): string => {
       const conversationLabel = messageConversation.label;
       // This is the source
-      const participant = messageConversation.participant;
-      const conversationList = messageConversation.conversationList.split('+');
+      const participants = messageConversation.participants;
 
       // Label is required if the conversation is a group chat
       if (messageConversation.isGroupChat) return conversationLabel;
 
-      for (const p of conversationList) {
-        if (p !== participant) {
+      for (const p of participants) {
+        if (p !== phoneNumber) {
           const contact = getContactByNumber(p);
-          return contact ? contact.display : p;
+          return contact ? contact.display : String(p); //force string here because json transfert server to ui make number of value when decoded :(
         }
       }
     },
@@ -113,8 +112,8 @@ export const useMessageActions = (): MessageActionProps => {
   );
 
   const getConversationParticipant = useCallback(
-    (conversationList: string) => {
-      const participant = conversationList.split('+').filter((p) => p !== myPhoneNumber);
+    (participants: string[]) => {
+      const participant = participants.filter((p) => p !== myPhoneNumber);
 
       return getContactByNumber(participant[0]);
     },

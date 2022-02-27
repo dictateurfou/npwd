@@ -3,6 +3,6 @@
  * @param conversationList
  * @param phoneNumber
  */
-export const findParticipants = (conversationList: string, phoneNumber: string) => {
-  return conversationList.split('+').filter((participant) => participant !== phoneNumber);
+export const findParticipants = (conversationList: Array<string>, phoneNumber: string) => {
+  return conversationList.filter((participant) => participant !== phoneNumber);
 };

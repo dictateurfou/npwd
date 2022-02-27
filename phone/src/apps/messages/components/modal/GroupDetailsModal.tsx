@@ -10,20 +10,21 @@ import { useContactActions } from '../../../contacts/hooks/useContactActions';
 interface GroupDetailsModalProps {
   open: boolean;
   onClose: () => void;
-  conversationList: string;
+  participants: Array<string>;
   addContact: (number: any) => void;
 }
 
 const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({
   open,
   onClose,
-  conversationList,
+  participants,
   addContact,
 }) => {
   const myPhoneNumber = useMyPhoneNumber();
   const { getContactByNumber } = useContactActions();
 
-  const participants = findParticipants(conversationList, myPhoneNumber);
+  //const participants = findParticipants(conversationList, myPhoneNumber);
+  const participantsWithoutLocalNumber = findParticipants(participants, myPhoneNumber);
 
   const findContact = (phoneNumber: string) => {
     return getContactByNumber(phoneNumber);
@@ -41,7 +42,7 @@ const GroupDetailsModal: React.FC<GroupDetailsModalProps> = ({
           {/*<Button size="small">Add participant</Button>*/}
         </Stack>
       </Box>
-      {participants.map((participant) => {
+      {participantsWithoutLocalNumber.map((participant) => {
         const contact = findContact(participant);
 
         return (

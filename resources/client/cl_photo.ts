@@ -133,9 +133,13 @@ const takePhoto = () =>
       async (data: any) => {
         try {
           let parsedData = JSON.parse(data);
-          for (const index of config.images.returnedDataIndexes) parsedData = parsedData[index];
-          const resp = await ClUtils.emitNetPromise(PhotoEvents.UPLOAD_PHOTO, parsedData);
-          res(resp);
+          if (parsedData.success) {
+            const fileData = parsedData.files[0];
+            const resp = await ClUtils.emitNetPromise(PhotoEvents.UPLOAD_PHOTO, fileData.url);
+            res(resp);
+            console.log(resp);
+          } else {
+          }
         } catch (e) {
           rej(e.message);
         }

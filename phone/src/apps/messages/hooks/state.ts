@@ -46,7 +46,9 @@ export const messageState = {
 
       const regExp = new RegExp(searchValue, 'gi');
 
-      return messageConversations.filter((conversation) => conversation.participant.match(regExp));
+      return messageConversations.filter((conversation) =>
+        String(conversation.participants[0]).match(regExp),
+      );
     },
   }),
   messages: atom<Message[]>({

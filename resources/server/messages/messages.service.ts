@@ -41,6 +41,9 @@ class _MessagesService {
     }
   }
 
+  /*conversationLabel: isGroupChat ? conversationLabel : '',
+      participants: [myPhoneNumber, ...selectedParticipants],
+      isGroupChat,*/
   async handleCreateMessageConversation(
     reqObj: PromiseRequest<PreDBConversation>,
     resp: PromiseEventResp<MessageConversation>,
@@ -49,12 +52,11 @@ class _MessagesService {
     const conversation = reqObj.data;
     const participants = conversation.participants;
 
-    const conversationList = createGroupHashID(participants);
-
-    const doesExist = await this.messagesDB.doesConversationExist(conversationList);
+    const doesExist = await this.messagesDB.doesConversationExist(participants);
 
     if (doesExist) {
-      const playerHasConversation = await this.messagesDB.doesConversationExistForPlayer(
+      //already exist (need refactor)
+      /*const playerHasConversation = await this.messagesDB.doesConversationExistForPlayer(
         conversationList,
         playerPhoneNumber,
       );
@@ -77,14 +79,17 @@ class _MessagesService {
           isGroupChat: conversation.isGroupChat,
         };
 
-        return resp({ status: 'ok', data: { ...respData, participant: playerPhoneNumber } });
-      }
+        return resp({ status: 'ok', data: { ...respData, participants: [playerPhoneNumber] } });
+      }*/
+      return resp({
+        status: 'error',
+        errorMsg: 'MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE',
+      });
     }
 
     try {
-      const conversationId = await MessagesDB.createConversation(
+      const [conversationId, participantId] = await MessagesDB.createConversation(
         participants,
-        conversationList,
         conversation.conversationLabel,
         conversation.isGroupChat,
       );
@@ -93,11 +98,12 @@ class _MessagesService {
       const respData = {
         id: conversationId,
         label: conversation.conversationLabel,
-        conversationList,
         isGroupChat: conversation.isGroupChat,
+        participantId: participantId,
+        participants: participants,
       };
 
-      resp({ status: 'ok', data: { ...respData, participant: playerPhoneNumber } });
+      resp({ status: 'ok', data: { ...respData } });
 
       for (const participant of participants) {
         if (participant !== playerPhoneNumber) {
@@ -109,7 +115,6 @@ class _MessagesService {
               MessageEvents.CREATE_MESSAGE_CONVERSATION_SUCCESS,
               {
                 ...respData,
-                participant: participantPlayer.getPhoneNumber(),
               },
               participantPlayer.source,
             );
@@ -139,7 +144,7 @@ class _MessagesService {
       const player = PlayerService.getPlayer(reqObj.source);
       const authorPhoneNumber = player.getPhoneNumber();
       const messageData = reqObj.data;
-      const participants = getIdentifiersFromParticipants(messageData.conversationList);
+      const participants = messageData.participants;
       const userIdentifier = player.getIdentifier();
 
       const messageId = await this.messagesDB.createMessage({

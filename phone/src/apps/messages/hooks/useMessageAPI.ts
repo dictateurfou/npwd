@@ -5,6 +5,7 @@ import {
   MessageEvents,
   PreDBConversation,
   PreDBMessage,
+  PreDBConv,
 } from '@typings/messages';
 import { ServerPromiseResp } from '@typings/common';
 import { useSnackbar } from '@os/snackbar/hooks/useSnackbar';
@@ -18,13 +19,13 @@ import { MockConversationServerResp } from '../utils/constants';
 import { useMyPhoneNumber } from '@os/simcard/hooks/useMyPhoneNumber';
 
 type UseMessageAPIProps = {
-  sendMessage: ({ conversationId, message, tgtPhoneNumber }: PreDBMessage) => void;
+  sendMessage: ({ conversationId, message }: PreDBConv) => void;
   sendEmbedMessage: ({ conversationId, embed }: PreDBMessage) => void;
   deleteMessage: (message: Message) => void;
   addConversation: (conversation: PreDBConversation) => void;
   deleteConversation: (conversationIds: number[]) => void;
   fetchMessages: (conversationId: string, page: number) => void;
-  setMessageRead: (conversationId: number) => void;
+  setMessageRead: (participantId: number) => void;
 };
 
 export const useMessageAPI = (): UseMessageAPIProps => {
@@ -38,19 +39,18 @@ export const useMessageAPI = (): UseMessageAPIProps => {
     setMessageReadState,
   } = useMessageActions();
   const history = useHistory();
-  const { state: messageConversationsState, contents: messageConversationsContents } =
-    useRecoilValueLoadable(messageState.messageCoversations);
+  const { state: messageConversationsState } = useRecoilValueLoadable(
+    messageState.messageCoversations,
+  );
   const setMessages = useSetMessages();
 
   const myPhoneNumber = useMyPhoneNumber();
 
   const sendMessage = useCallback(
-    ({ conversationId, message, tgtPhoneNumber, conversationList }: PreDBMessage) => {
+    ({ conversationId, message }: PreDBConv) => {
       fetchNui<ServerPromiseResp<Message>>(MessageEvents.SEND_MESSAGE, {
         conversationId,
-        conversationList,
         message,
-        tgtPhoneNumber,
         sourcePhoneNumber: myPhoneNumber,
       }).then((resp) => {
         if (resp.status !== 'ok') {
@@ -67,13 +67,14 @@ export const useMessageAPI = (): UseMessageAPIProps => {
   );
 
   const sendEmbedMessage = useCallback(
-    ({ conversationId, embed, tgtPhoneNumber, conversationList }: PreDBMessage) => {
+    ({ conversationId, embed, tgtPhoneNumber, participantId, participants }: PreDBMessage) => {
       fetchNui<ServerPromiseResp<Message>, PreDBMessage>(MessageEvents.SEND_MESSAGE, {
         conversationId,
         embed: JSON.stringify(embed),
         is_embed: true,
         tgtPhoneNumber,
-        conversationList,
+        participantId: participantId,
+        participants,
         sourcePhoneNumber: myPhoneNumber,
       }).then((resp) => {
         if (resp.status !== 'ok') {
@@ -90,8 +91,8 @@ export const useMessageAPI = (): UseMessageAPIProps => {
   );
 
   const setMessageRead = useCallback(
-    (conversationId: number) => {
-      fetchNui<ServerPromiseResp<void>>(MessageEvents.SET_MESSAGE_READ, conversationId).then(
+    (participantId: number) => {
+      fetchNui<ServerPromiseResp<void>>(MessageEvents.SET_MESSAGE_READ, participantId).then(
         (resp) => {
           if (resp.status !== 'ok') {
             return addAlert({
@@ -100,7 +101,7 @@ export const useMessageAPI = (): UseMessageAPIProps => {
             });
           }
 
-          setMessageReadState(conversationId, 0);
+          setMessageReadState(participantId, 0);
         },
       );
     },
@@ -157,22 +158,34 @@ export const useMessageAPI = (): UseMessageAPIProps => {
 
         // FIXME: This won't work properly has the conversationList will differ each time someone creates a convo.
         // FIXME: Just like this for now.
+        /* DICTAFIX
         const doesConversationExist = messageConversationsContents.find(
           (c) => c.conversationList === resp.data.conversationList,
-        );
-
+        );*/
+        /*
         if (doesConversationExist) {
           history.push('/messages');
           return addAlert({
             message: t('MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE'),
             type: 'error',
           });
-        }
+        }*/
 
+        /*
+        let checker = (arr : Array<any>, target : Array<any>) => target.every(v => arr.includes(v));
+        let doesConversationExist = false
+        for(const v of messageConversationsContents){
+          if(v.participants.length == conversation.participants.length){
+            if(checker(v.participants,conversation.participants)){
+              doesConversationExist = true
+            }
+          }
+        }
+        */
         updateLocalConversations({
-          participant: resp.data.participant,
+          participants: resp.data.participants,
+          participantId: resp.data.participantId,
           id: resp.data.id,
-          conversationList: resp.data.conversationList,
           label: resp.data.label,
           isGroupChat: resp.data.isGroupChat,
           unread: 0,
@@ -182,14 +195,7 @@ export const useMessageAPI = (): UseMessageAPIProps => {
         history.push(`/messages`);
       });
     },
-    [
-      history,
-      updateLocalConversations,
-      addAlert,
-      t,
-      messageConversationsContents,
-      messageConversationsState,
-    ],
+    [history, updateLocalConversations, addAlert, t, messageConversationsState],
   );
 
   const deleteConversation = useCallback(

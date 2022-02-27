@@ -53,7 +53,7 @@ export const useMessageNotifications = () => {
       if (group.unread > 1) {
         addNotification({
           ...n,
-          title: group.participant,
+          title: group.participants[0],
           content: t('MESSAGES.MESSAGES.UNREAD_MESSAGES', {
             count: group.unread,
           }),

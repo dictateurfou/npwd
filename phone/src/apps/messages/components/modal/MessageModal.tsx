@@ -26,6 +26,7 @@ import { Call } from '@mui/icons-material';
 import { useMessageActions } from '../../hooks/useMessageActions';
 import GroupDetailsModal from './GroupDetailsModal';
 import Backdrop from '@ui/components/Backdrop';
+import { useMyPhoneNumber } from '@os/simcard/hooks/useMyPhoneNumber';
 
 const LARGE_HEADER_CHARS = 30;
 const MAX_HEADER_CHARS = 80;
@@ -56,6 +57,7 @@ const useStyles = makeStyles({
 });
 
 // abandon all hope ye who enter here
+// lol who have write this ? easy
 export const MessageModal = () => {
   const [t] = useTranslation();
   const classes = useStyles();
@@ -66,6 +68,7 @@ export const MessageModal = () => {
   const { fetchMessages } = useMessageAPI();
   const { getLabelOrContact, getConversationParticipant } = useMessageActions();
   const { initializeCall } = useCall();
+  const myPhoneNumber = useMyPhoneNumber();
 
   const { getContactByNumber } = useContactActions();
   const [messages, setMessages] = useMessagesState();
@@ -123,8 +126,9 @@ export const MessageModal = () => {
     );
   }
 
-  let header = getLabelOrContact(activeMessageConversation);
+  let header = getLabelOrContact(activeMessageConversation, myPhoneNumber);
   // don't allow too many characters, it takes too much room
+  console.log(header); // cause number
   const truncatedHeader = `${header.slice(0, MAX_HEADER_CHARS).trim()}...`;
   header = header.length > MAX_HEADER_CHARS ? truncatedHeader : header;
 
@@ -142,9 +146,11 @@ export const MessageModal = () => {
   };
 
   // FIXME: This is wrong :O
-  const targetNumber = activeMessageConversation.participant;
-
-  const doesContactExist = getConversationParticipant(activeMessageConversation.conversationList);
+  const targetNumber = activeMessageConversation.participants;
+  console.log('-----------------------------------');
+  console.log(targetNumber);
+  console.log(activeMessageConversation);
+  const doesContactExist = getConversationParticipant(activeMessageConversation.participants);
   return (
     <Slide direction="left" in={!!activeMessageConversation}>
       <Paper
@@ -160,7 +166,7 @@ export const MessageModal = () => {
         <GroupDetailsModal
           open={isGroupModalOpen}
           onClose={closeGroupModal}
-          conversationList={activeMessageConversation.conversationList}
+          participants={activeMessageConversation.participants}
           addContact={handleAddContact}
         />
         {isGroupModalOpen && <Backdrop />}
@@ -181,7 +187,7 @@ export const MessageModal = () => {
             title={`${t('GENERIC.CALL')} ${targetNumber}`}
             placement="bottom"
           >
-            <IconButton onClick={() => initializeCall(targetNumber)}>
+            <IconButton onClick={() => initializeCall(String(targetNumber[0]))}>
               <Call fontSize="medium" />
             </IconButton>
           </Tooltip>

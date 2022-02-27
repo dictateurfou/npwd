@@ -27,9 +27,7 @@ const MessageInput = ({ messageConversation, onAddImageClick }: IProps) => {
     if (message.trim()) {
       await sendMessage({
         conversationId: messageConversation.id,
-        conversationList: activeMessageConversation.conversationList,
         message: clean(message),
-        tgtPhoneNumber: messageConversation.participant,
       });
       setMessage('');
     }

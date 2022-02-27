@@ -5,29 +5,29 @@
     "exportFunction": "myCheckerFunction"
   },
   "general": {
-    "useResourceIntegration": false,
+    "useResourceIntegration": true,
     "toggleKey": "f1",
     "toggleCommand": "phone"
   },
   "database": {
-    "useIdentifierPrefix": false,
-    "playerTable": "users",
-    "identifierColumn": "identifier",
+    "useIdentifierPrefix": true,
+    "playerTable": "player_account",
+    "identifierColumn": "player_identifier",
     "identifierType": "license",
     "profileQueries": true,
     "phoneNumberColumn": "phone_number"
   },
   "images": {
-    "url": "https://api.imgur.com/3/image",
-    "type": "imgur",
+    "url": "http://135.125.98.69/index.php/api/phoneUpload",
+    "type": "files[]",
     "imageEncoding": "jpg",
     "contentType": "multipart/form-data",
     "authorizationPrefix": "Client-ID",
     "useAuthorization": true,
-    "returnedDataIndexes": ["data", "link"]
+    "returnedDataIndexes": ["success", "files"]
   },
   "imageSafety": {
-    "filterUnsafeImageUrls": true,
+    "filterUnsafeImageUrls": false,
     "embedUnsafeImages": false,
     "embedUrl": "https://i.example.com/embed",
     "safeImageUrls": [
@@ -37,12 +37,9 @@
       "tenor.com",
       "discord.com",
       "discordapp.com",
-      "wikipedia.org"
+      "wikipedia.org",
+      "135.125.98.69"
     ]
-  },
-  "profanityFilter": {
-    "enabled": false,
-    "badWords": []
   },
   "twitter": {
     "showNotifications": true,
@@ -60,6 +57,10 @@
   "match": {
     "generateProfileNameFromUsers": true,
     "allowEditableProfileName": true
+  },
+  "profanityFilter": {
+    "enabled": false,
+    "badWords": []
   },
   "debug": {
     "level": "error",

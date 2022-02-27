@@ -13,6 +13,7 @@ import { MessageConversation } from '@typings/messages';
 import { useContactActions } from '../../../contacts/hooks/useContactActions';
 import { useContacts } from '../../../contacts/hooks/state';
 import { Contact } from '@typings/contact';
+import { useMyPhoneNumber } from '@os/simcard/hooks/useMyPhoneNumber';
 
 interface IProps {
   messageConversation: MessageConversation;
@@ -35,6 +36,7 @@ const MessageGroupItem = ({
 
   const contacts = useContacts();
   const { getContactByNumber } = useContactActions();
+  const myPhoneNumber = useMyPhoneNumber();
 
   const contactDisplay = useCallback(
     (number: string): Contact | null => {
@@ -46,14 +48,13 @@ const MessageGroupItem = ({
   const getLabelOrContact = useCallback(() => {
     const conversationLabel = messageConversation.label;
     // This is the source
-    const participant = messageConversation.participant;
-    const conversationList = messageConversation.conversationList.split('+');
+    const participants = messageConversation.participants;
 
     // Label is required if the conversation is a group chat
     if (messageConversation.isGroupChat) return conversationLabel;
 
-    for (const p of conversationList) {
-      if (p !== participant) {
+    for (const p of participants) {
+      if (p !== myPhoneNumber) {
         const contact = contactDisplay(p);
         return contact ? contact.display : p;
       }

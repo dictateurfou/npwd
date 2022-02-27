@@ -4,8 +4,8 @@ import { ServerPromiseResp } from '@typings/common';
 export const MockMessageConversations: MessageConversation[] = [
   {
     id: 1,
-    conversationList: '111-1134+215-8139',
-    participant: '111-1134',
+    participantId: 1,
+    participants: ['445885', '4545154'],
     unread: 0,
     label: '',
     updatedAt: 5,
@@ -13,8 +13,8 @@ export const MockMessageConversations: MessageConversation[] = [
   },
   {
     id: 2,
-    conversationList: '111-1134+321+215-8139',
-    participant: '111-1134',
+    participantId: 2,
+    participants: ['4455', '454554'],
     unread: 0,
     label: 'Secret Project Error chat',
     updatedAt: 5,

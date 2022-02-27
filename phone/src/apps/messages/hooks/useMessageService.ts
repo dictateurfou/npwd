@@ -35,10 +35,10 @@ export const useMessagesService = () => {
   const handleAddConversation = useCallback(
     (conversation: MessageConversation) => {
       updateLocalConversations({
-        participant: conversation.participant,
+        participantId: conversation.participantId,
+        participants: conversation.participants,
         isGroupChat: conversation.isGroupChat,
         id: conversation.id,
-        conversationList: conversation.conversationList,
         label: conversation.label,
         unread: 0,
       });

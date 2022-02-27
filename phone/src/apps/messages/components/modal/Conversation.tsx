@@ -102,7 +102,7 @@ const Conversation: React.FC<IProps> = ({ activeMessageGroup, messages }) => {
         </Box>
       </Box>
       <MessageInput
-        messageGroupName={activeMessageGroup.participant}
+        messageGroupName={String(activeMessageGroup.participants[0])}
         messageConversation={activeMessageGroup}
         onAddImageClick={() => setContextMenuOpen(true)}
       />

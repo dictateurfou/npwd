@@ -38,9 +38,7 @@ export const MessageImageModal = ({
     (m) => {
       sendMessage({
         conversationId: messageGroup.id,
-        conversationList: activeMessageConversation.conversationList,
         message: m,
-        tgtPhoneNumber: messageGroup.participant,
       });
       onClose();
     },

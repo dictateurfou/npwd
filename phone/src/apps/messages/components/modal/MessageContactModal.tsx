@@ -28,9 +28,10 @@ const MessageContactModal: React.FC<MessageContactModalProps> = ({
   const handleSendEmbedMessage = () => {
     sendEmbedMessage({
       conversationId: messageGroup.id,
-      conversationList: activeMessageConversation.conversationList,
+      participants: activeMessageConversation.participants,
+      participantId: activeMessageConversation.participantId,
       embed: { type: 'contact', ...selectedContact },
-      tgtPhoneNumber: messageGroup.participant,
+      tgtPhoneNumber: String(messageGroup.participants[0]),
     });
     onClose();
   };
