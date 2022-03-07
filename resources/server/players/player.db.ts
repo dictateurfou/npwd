@@ -5,8 +5,12 @@ export class PlayerRepo {
   async fetchIdentifierFromPhoneNumber(phoneNumber: string): Promise<string | null> {
     const query = `SELECT ${config.database.identifierColumn} FROM ${config.database.playerTable} WHERE ${config.database.phoneNumberColumn} = ?`;
     const [results] = await DbInterface._rawExec(query, [phoneNumber]);
+    const result = <any>results;
     // Get identifier from results
-    return (results as any[])[0][config.database.identifierColumn] || null;
+    if (result[0] == undefined) {
+      return null;
+    }
+    return result[0][config.database.identifierColumn];
   }
 
   async fetchPhoneNumberFromIdentifier(identifier: string) {

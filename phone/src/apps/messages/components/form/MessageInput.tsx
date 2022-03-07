@@ -28,6 +28,8 @@ const MessageInput = ({ messageConversation, onAddImageClick }: IProps) => {
       await sendMessage({
         conversationId: messageConversation.id,
         message: clean(message),
+        participants: messageConversation.participants,
+        participantId: messageConversation.participantId,
       });
       setMessage('');
     }

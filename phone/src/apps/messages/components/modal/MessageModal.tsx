@@ -151,6 +151,15 @@ export const MessageModal = () => {
   console.log(targetNumber);
   console.log(activeMessageConversation);
   const doesContactExist = getConversationParticipant(activeMessageConversation.participants);
+
+  const getNumberOfConv = () => {
+    for (const v of activeMessageConversation.participants) {
+      if (String(myPhoneNumber) !== String(v)) {
+        return v;
+      }
+    }
+  };
+
   return (
     <Slide direction="left" in={!!activeMessageConversation}>
       <Paper
@@ -184,10 +193,10 @@ export const MessageModal = () => {
           </Typography>
           <Tooltip
             classes={{ tooltip: classes.tooltip }}
-            title={`${t('GENERIC.CALL')} ${targetNumber}`}
+            title={`${t('GENERIC.CALL')} ${getNumberOfConv()}`}
             placement="bottom"
           >
-            <IconButton onClick={() => initializeCall(String(targetNumber[0]))}>
+            <IconButton onClick={() => initializeCall(getNumberOfConv())}>
               <Call fontSize="medium" />
             </IconButton>
           </Tooltip>
@@ -197,7 +206,7 @@ export const MessageModal = () => {
             </Button>
           ) : !activeMessageConversation.isGroupChat && !doesContactExist ? (
             <Button>
-              <PersonAddIcon onClick={() => handleAddContact(targetNumber)} fontSize="large" />
+              <PersonAddIcon onClick={() => handleAddContact(getNumberOfConv())} fontSize="large" />
             </Button>
           ) : !activeMessageConversation.isGroupChat && doesContactExist ? null : null}
         </Box>

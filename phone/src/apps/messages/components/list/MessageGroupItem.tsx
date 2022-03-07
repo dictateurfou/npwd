@@ -54,7 +54,7 @@ const MessageGroupItem = ({
     if (messageConversation.isGroupChat) return conversationLabel;
 
     for (const p of participants) {
-      if (p !== myPhoneNumber) {
+      if (String(p) !== String(myPhoneNumber)) {
         const contact = contactDisplay(p);
         return contact ? contact.display : p;
       }

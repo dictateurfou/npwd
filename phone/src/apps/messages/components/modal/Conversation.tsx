@@ -12,7 +12,8 @@ import { useHistory } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import MessageContextMenu from './MessageContextMenu';
-
+import { useContactActions } from '../../../contacts/hooks/useContactActions';
+import { useMessageActions } from '../../hooks/useMessageActions';
 interface IProps {
   activeMessageGroup: MessageConversation;
   messages: Message[];
@@ -31,6 +32,8 @@ const Conversation: React.FC<IProps> = ({ activeMessageGroup, messages }) => {
   const [t] = useTranslation();
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(!!messages.length);
+  const { getContactByNumber } = useContactActions();
+  const { getConversationParticipant, getLabelOrContact } = useMessageActions();
 
   const handleNextPage = useCallback(() => {
     fetchNui<ServerPromiseResp<Message[]>>(MessageEvents.FETCH_MESSAGES, {
@@ -57,6 +60,10 @@ const Conversation: React.FC<IProps> = ({ activeMessageGroup, messages }) => {
       setMessages((currVal) => [...resp.data, ...currVal]);
     });
   }, [addAlert, conversationId, setMessages, history, t, page, setPage]);
+
+  const findContact = (participants: string[]) => {
+    return getConversationParticipant(participants);
+  };
 
   return (
     <>
@@ -93,16 +100,16 @@ const Conversation: React.FC<IProps> = ({ activeMessageGroup, messages }) => {
                 loader={<CircularProgress />}
                 dataLength={messages.length}
               >
-                {messages.map((message) => (
-                  <MessageBubble key={message.id} message={message} />
-                ))}
+                {messages.map((message) => {
+                  return <MessageBubble key={message.id} message={message} />;
+                })}
               </InfiniteScroll>
             </div>
           </Box>
         </Box>
       </Box>
       <MessageInput
-        messageGroupName={String(activeMessageGroup.participants[0])}
+        messageGroupName={String(findContact(activeMessageGroup.participants))}
         messageConversation={activeMessageGroup}
         onAddImageClick={() => setContextMenuOpen(true)}
       />

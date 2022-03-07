@@ -21,6 +21,8 @@ export interface PreDBMessage {
 export interface PreDBConv {
   conversationId: number;
   message?: string;
+  participants: string[];
+  participantId: number;
 }
 
 export interface CreateMessageDTO {
@@ -107,7 +109,7 @@ export interface CreateMessageBroadcast {
 }
 
 export interface SetMessageRead {
-  groupId: string;
+  participantId: number;
 }
 
 export interface MessageConversationResponse {

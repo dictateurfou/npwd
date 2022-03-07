@@ -211,7 +211,8 @@ class _PlayerService {
     }
     // Whether we fetch from database if not found in online players
     if (fetch) {
-      return await this.playerDB.fetchIdentifierFromPhoneNumber(phoneNumber);
+      const rslt = await this.playerDB.fetchIdentifierFromPhoneNumber(phoneNumber);
+      return rslt;
     }
   }
 

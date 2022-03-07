@@ -169,21 +169,18 @@ class _MessagesService {
         },
       });
 
+      console.log('passe dabns handle message');
       // participantId is the participants phone number
-      for (const participantId of participants) {
-        if (participantId !== player.getPhoneNumber()) {
+      for (let participantNumber of participants) {
+        participantNumber = String(participantNumber); // force string
+        if (participantNumber !== String(player.getPhoneNumber())) {
           const participantIdentifier = await PlayerService.getIdentifierByPhoneNumber(
-            participantId,
+            participantNumber,
             true,
           );
 
-          const participantNumber = await PlayerService.getPhoneNumberFromIdentifier(
-            participantIdentifier,
-          );
-
           const participantPlayer = PlayerService.getPlayerFromIdentifier(participantIdentifier);
-
-          await this.messagesDB.setMessageUnread(messageData.conversationId, participantNumber);
+          await this.messagesDB.setMessageUnread(messageData.participantId, participantNumber);
 
           if (participantPlayer) {
             emitNet(MessageEvents.SEND_MESSAGE_SUCCESS, participantPlayer.source, {
@@ -256,43 +253,44 @@ class _MessagesService {
       const participantIdentifier = await PlayerService.getIdentifierByPhoneNumber(targetNumber);
       const participantPlayer = PlayerService.getPlayerFromIdentifier(participantIdentifier);
 
-      // Create our groupId hash
-      const conversationList = createGroupHashID([senderNumber, targetNumber]);
       // Get our conversationId
-      const conversationId = await this.messagesDB.getConversationId(conversationList);
+      const conversation = await this.messagesDB.getConversationByParticipant([
+        senderNumber,
+        targetNumber,
+      ]);
+      if (conversation !== false) {
+        const messageId = await this.messagesDB.createMessage({
+          message,
+          embed: '',
+          is_embed: false,
+          conversationId: conversation.id,
+          userIdentifier: senderPlayer || senderNumber,
+          authorPhoneNumber: senderNumber,
+        });
 
-      const messageId = await this.messagesDB.createMessage({
-        message,
-        embed: '',
-        is_embed: false,
-        conversationId,
-        userIdentifier: senderPlayer || senderNumber,
-        authorPhoneNumber: senderNumber,
-      });
-
-      // Create respondObj
-      const messageData = {
-        id: messageId,
-        message,
-        conversationList,
-        conversation_id: conversationId,
-        author: senderNumber,
-      };
-
-      if (participantPlayer) {
-        emitNet(MessageEvents.SEND_MESSAGE_SUCCESS, participantPlayer.source, {
-          ...messageData,
-          conversation_id: conversationId,
+        // Create respondObj
+        const messageData = {
+          id: messageId,
+          message,
+          conversation_id: conversation.id,
           author: senderNumber,
-        });
-        emitNet(MessageEvents.CREATE_MESSAGE_BROADCAST, participantPlayer.source, {
-          conversationName: senderNumber,
-          conversation_id: conversationId,
-          message: messageData.message,
-        });
-      }
+        };
 
-      await this.messagesDB.setMessageUnread(conversationId, targetNumber);
+        if (participantPlayer) {
+          emitNet(MessageEvents.SEND_MESSAGE_SUCCESS, participantPlayer.source, {
+            ...messageData,
+            conversation_id: conversation.id,
+            author: senderNumber,
+          });
+          emitNet(MessageEvents.CREATE_MESSAGE_BROADCAST, participantPlayer.source, {
+            conversationName: senderNumber,
+            conversation_id: conversation.id,
+            message: messageData.message,
+          });
+        }
+        console.log(conversation);
+        await this.messagesDB.setMessageUnread(conversation.participantId, targetNumber);
+      }
     } catch (err) {
       console.log(`Failed to emit message. Error: ${err.message}`);
     }

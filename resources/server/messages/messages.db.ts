@@ -124,13 +124,12 @@ export class _MessagesDB {
     return result.insertId;
   }
 
-  async setMessageUnread(conversationId: number, tgtPhoneNumber: string) {
+  async setMessageUnread(participantId: number, participantNumber: string) {
     const query = `UPDATE npwd_messages_participants
                    SET unread_count = unread_count + 1
-                   WHERE conversation_id = ?
-                     AND participant = ?`;
-
-    await DbInterface._rawExec(query, [conversationId, tgtPhoneNumber]);
+                   WHERE id = ?
+                     AND number = ?`;
+    await DbInterface._rawExec(query, [participantId, participantNumber]);
   }
 
   async setMessageRead(participantId: number, participantNumber: string) {
@@ -168,7 +167,8 @@ export class _MessagesDB {
     const [results] = await DbInterface._rawExec(query, [participants.length]);
     const result = <any>results;
 
-    let checker = (arr: Array<any>, target: Array<any>) => target.every((v) => arr.includes(v));
+    let checker = (arr: Array<String>, target: Array<String>) =>
+      target.every((v) => arr.includes(String(v)));
     for (const v of result) {
       const participantsConv = JSON.parse(v.participants);
       if (checker(participants, participantsConv) == true) {
@@ -194,13 +194,32 @@ export class _MessagesDB {
     return have;
   }
 
+  async getConversationByParticipant(participants: string[]) {
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants, COUNT(*) as count
+                          FROM npwd_messages_participants
+                          INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
+                          WHERE npwd_messages_participants.id GROUP BY npwd_messages_participants.id HAVING COUNT(*) = ?`;
+
+    const [results] = await DbInterface._rawExec(query, [participants.length]);
+    const result = <any>results;
+
+    let checker = (arr: Array<String>, target: Array<String>) =>
+      target.every((v) => arr.includes(String(v)));
+    for (const v of result) {
+      const participantsConv = JSON.parse(v.participants);
+      if (checker(participants, participantsConv) == true) {
+        return v;
+      }
+    }
+    return false;
+  }
   // misc stuff
-  async getConversationId(conversationList: string): Promise<number> {
+  async getConversationId(participantId: string): Promise<number> {
     const query = `SELECT id
                    FROM npwd_messages_conversations
-                   WHERE conversation_list = ?`;
+                   WHERE participants = ?`;
 
-    const [results] = await DbInterface._rawExec(query, [conversationList]);
+    const [results] = await DbInterface._rawExec(query, [participantId]);
     const result = <any>results;
 
     return result[0].id;

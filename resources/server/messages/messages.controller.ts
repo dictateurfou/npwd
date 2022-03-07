@@ -52,14 +52,16 @@ onNetPromise<PreDBMessage, Message>(MessageEvents.SEND_MESSAGE, async (reqObj, r
   MessagesService.handleSendMessage(reqObj, resp)
     .then(async () => {
       // A simple solution to listen for messages. Will expand upon this soonTM.
-      const funcRef = OnMessageExportMap.get(reqObj.data.tgtPhoneNumber);
-      if (funcRef) {
-        try {
-          await funcRef({ data: reqObj.data, source: reqObj.source });
-        } catch (e) {
-          messagesLogger.error(
-            `Failed to find a callback reference for onMessage. Probably because the resource(s) using the export was stopped or restarted. Please restart said resource(s). Error: ${e.message}`,
-          );
+      for (const v of reqObj.data.participants) {
+        const funcRef = OnMessageExportMap.get(String(v));
+        if (funcRef) {
+          try {
+            await funcRef({ data: reqObj.data, source: reqObj.source });
+          } catch (e) {
+            messagesLogger.error(
+              `Failed to find a callback reference for onMessage. Probably because the resource(s) using the export was stopped or restarted. Please restart said resource(s). Error: ${e.message}`,
+            );
+          }
         }
       }
     })

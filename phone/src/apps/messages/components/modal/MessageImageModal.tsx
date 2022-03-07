@@ -39,6 +39,8 @@ export const MessageImageModal = ({
       sendMessage({
         conversationId: messageGroup.id,
         message: m,
+        participants: activeMessageConversation.participants,
+        participantId: activeMessageConversation.participantId,
       });
       onClose();
     },

@@ -62,6 +62,20 @@
     "enabled": false,
     "badWords": []
   },
+  "defaultContact": [
+    {
+      "id": 988656,
+      "display": "police",
+      "number": "911",
+      "avatar": null
+    },
+    {
+      "id": 988657,
+      "display": "ems",
+      "number": "912",
+      "avatar": null
+    }
+  ],
   "debug": {
     "level": "error",
     "enabled": true,

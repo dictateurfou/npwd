@@ -1,3 +1,5 @@
+import { Contact } from './contact';
+
 interface TwitterConfig {
   showNotifications: boolean;
   generateProfileNameFromUsers: boolean;
@@ -90,4 +92,5 @@ export interface ResourceConfig {
   images: ImageConfig;
   imageSafety: ImageSafety;
   profanityFilter: ProfanityFilter;
+  defaultContact: Contact[];
 }

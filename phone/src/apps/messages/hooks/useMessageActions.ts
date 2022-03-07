@@ -13,7 +13,7 @@ interface MessageActionProps {
   deleteLocalMessage: (messageId: number) => void;
   setMessageReadState: (participantId: number, unreadCount: number) => void;
   getLabelOrContact: (messageConversation: MessageConversation, number: string) => string;
-  getConversationParticipant: (conversationList: string[]) => Contact | null;
+  getConversationParticipant: (participants: string[]) => Contact | null;
 }
 
 export const useMessageActions = (): MessageActionProps => {
@@ -42,7 +42,7 @@ export const useMessageActions = (): MessageActionProps => {
             console.log('hello');
             return {
               ...message,
-              unread: unreadCount,
+              unreadCount: unreadCount,
             };
           }
 
@@ -63,7 +63,7 @@ export const useMessageActions = (): MessageActionProps => {
       if (messageConversation.isGroupChat) return conversationLabel;
 
       for (const p of participants) {
-        if (p !== phoneNumber) {
+        if (String(p) !== phoneNumber) {
           const contact = getContactByNumber(p);
           return contact ? contact.display : String(p); //force string here because json transfert server to ui make number of value when decoded :(
         }

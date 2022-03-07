@@ -5,6 +5,22 @@ import { ServerPromiseResp } from '@typings/common';
 import { buildRespObj } from '@utils/misc';
 import { BrowserContactsState } from '../utils/constants';
 
+//i dont know react for make good stuff for load config is the reason of the default contact stocked here
+const defaultContact = [
+  {
+    id: 988656,
+    display: 'police',
+    number: '911',
+    avatar: null,
+  },
+  {
+    id: 988657,
+    display: 'ems',
+    number: '912',
+    avatar: null,
+  },
+];
+
 export const contactsState = {
   contacts: atom<Contact[]>({
     key: 'contactsList',
@@ -33,10 +49,9 @@ export const contactsState = {
     key: 'filteredContacts',
     get: ({ get }) => {
       const filterInputVal: string = get(contactsState.filterInput);
-      const contacts: Contact[] = get(contactsState.contacts);
+      const contacts: Contact[] = [...defaultContact, ...get(contactsState.contacts)];
 
       if (!filterInputVal) return contacts;
-
       const regExp = new RegExp(filterInputVal, 'gi');
 
       return contacts.filter(
