@@ -3,6 +3,8 @@ import { PhoneEvents } from '../../typings/phone';
 import { config } from './cl_config';
 import { animationService } from './animations/animation.controller';
 import { RegisterNuiCB } from './cl_utils';
+import { ClUtils } from './client';
+import { ConfigEvent } from '../../typings/config';
 
 // All main globals that are set and used across files
 global.isPhoneOpen = false;
@@ -109,13 +111,18 @@ RegisterCommand(
 
 export const checkHasPhone = async (): Promise<boolean> => {
   if (!config.PhoneAsItem.enabled) return true;
-  const exportResp = await Promise.resolve(
-    exps[config.PhoneAsItem.exportResource][config.PhoneAsItem.exportFunction](),
-  );
-  if (typeof exportResp !== 'number' && typeof exportResp !== 'boolean') {
-    throw new Error('You must return either a boolean or number from your export function');
+  let exportResp;
+  if (config.PhoneAsItem.type == 'client') {
+    exportResp = await Promise.resolve(
+      exps[config.PhoneAsItem.exportResource][config.PhoneAsItem.exportFunction](), //client check ? really
+    );
+    if (typeof exportResp !== 'number' && typeof exportResp !== 'boolean') {
+      throw new Error('You must return either a boolean or number from your export function');
+    }
+  } else {
+    const check = await ClUtils.emitNetPromise(ConfigEvent.CHECK_PHONE_ITEM);
+    exportResp = check.data;
   }
-
   return !!exportResp;
 };
 

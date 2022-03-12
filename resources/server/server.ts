@@ -20,6 +20,8 @@ import './messages/middleware/emitMessage';
 
 import { mainLogger } from './sv_logger';
 import * as Sentry from '@sentry/node';
+import { onNetPromise } from './lib/PromiseNetEvents/onNetPromise';
+import { ConfigEvent } from '../../typings/config';
 
 // Setup sentry tracing
 if (config.debug.sentryEnabled && process.env.NODE_ENV === 'production') {
@@ -38,4 +40,12 @@ on('onServerResourceStart', (resource: string) => {
   if (resource === GetCurrentResourceName()) {
     mainLogger.info('Sucessfully started');
   }
+});
+
+onNetPromise<Boolean>(ConfigEvent.CHECK_PHONE_ITEM, async (reqObj, resp) => {
+  const exps = global.exports;
+  const exportResp = await Promise.resolve(
+    exps[config.PhoneAsItem.exportResource][config.PhoneAsItem.exportFunction](reqObj.source),
+  );
+  resp({ status: 'ok', data: exportResp });
 });

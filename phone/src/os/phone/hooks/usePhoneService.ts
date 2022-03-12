@@ -6,6 +6,7 @@ import { useCallback } from 'react';
 import { useHistory } from 'react-router';
 import { useSnackbar } from '@os/snackbar/hooks/useSnackbar';
 import { useNuiEvent } from '@common/hooks/useNuiEvent';
+import { loadConversations, messageState } from '../../../apps/messages/hooks/state';
 
 export const usePhoneService = () => {
   const { getApp } = useApps();
@@ -16,6 +17,8 @@ export const usePhoneService = () => {
   const setResourceConfig = useSetRecoilState(phoneState.resourceConfig);
   const setPhoneTime = useSetRecoilState(phoneState.phoneTime);
   const setIsPhoneDisabled = useSetRecoilState(phoneState.isPhoneDisabled);
+  const setConversation = useSetRecoilState(messageState.messageCoversations);
+  //const setContact = useSetRecoilState(contactsState.contacts)
 
   const handleOpenApp = useCallback(
     (app: string) => {
@@ -35,4 +38,9 @@ export const usePhoneService = () => {
   useNuiEvent('PHONE', PhoneEvents.SET_TIME, setPhoneTime);
   useNuiEvent<string>('PHONE', PhoneEvents.OPEN_APP, handleOpenApp);
   useNuiEvent('PHONE', PhoneEvents.IS_PHONE_DISABLED, setIsPhoneDisabled);
+
+  useNuiEvent('PHONE', PhoneEvents.RELOAD_STORE, async function () {
+    setConversation(await loadConversations());
+    //setContact(await loadContact()) // change load contact for load on sim ? (maybe)
+  });
 };

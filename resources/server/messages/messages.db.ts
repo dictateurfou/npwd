@@ -28,7 +28,7 @@ export class _MessagesDB {
                           WHERE number = ?) GROUP BY npwd_messages_conversations.id`;
 
     const [results] = await DbInterface._rawExec(query, [phoneNumber]);
-    console.log(results);
+    //console.log(results);
     for (const v of <MessageConversation[]>results) {
       v.participants = JSON.parse(String(v.participants));
       for (let v2 of v.participants) {
@@ -153,7 +153,7 @@ export class _MessagesDB {
     const query = `DELETE
                    FROM npwd_messages_participants
                    WHERE conversation_id = ?
-                     AND participant = ?`;
+                     AND number = ?`;
 
     await DbInterface._rawExec(query, [conversationId, phoneNumber]);
   }

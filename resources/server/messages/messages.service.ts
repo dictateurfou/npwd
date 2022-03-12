@@ -1,9 +1,5 @@
 import MessagesDB, { _MessagesDB } from './messages.db';
-import {
-  createGroupHashID,
-  getIdentifiersFromParticipants,
-  messagesLogger,
-} from './messages.utils';
+import { messagesLogger } from './messages.utils';
 import { PromiseEventResp, PromiseRequest } from '../lib/PromiseNetEvents/promise.types';
 import {
   DeleteConversationRequest,
@@ -34,7 +30,6 @@ class _MessagesService {
 
     try {
       const conversations = await MessagesDB.getConversations(phoneNumber);
-
       resp({ status: 'ok', data: conversations });
     } catch (err) {
       resp({ status: 'error', errorMsg: err.message });

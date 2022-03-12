@@ -1,8 +1,9 @@
 {
   "PhoneAsItem": {
-    "enabled": false,
-    "exportResource": "my-core-resource",
-    "exportFunction": "myCheckerFunction"
+    "enabled": true,
+    "exportResource": "rCore",
+    "exportFunction": "requestOpenPhone",
+    "type": "server"
   },
   "general": {
     "useResourceIntegration": true,

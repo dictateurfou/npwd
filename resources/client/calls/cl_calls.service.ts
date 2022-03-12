@@ -67,6 +67,7 @@ export class CallService {
   handleCallAccepted(callData: ActiveCall) {
     this.currentCall = callData.channelId;
     exp['pma-voice'].setCallChannel(callData.channelId);
+    //
     CallService.sendCallAction<ActiveCall>(CallEvents.SET_CALL_INFO, callData);
   }
 

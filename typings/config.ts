@@ -68,6 +68,7 @@ interface ImageConfig {
 }
 
 interface PhoneAsItemConfig {
+  type: string;
   enabled: boolean;
   exportResource: string;
   exportFunction: string;
@@ -93,4 +94,8 @@ export interface ResourceConfig {
   imageSafety: ImageSafety;
   profanityFilter: ProfanityFilter;
   defaultContact: Contact[];
+}
+
+export enum ConfigEvent {
+  CHECK_PHONE_ITEM = 'npwd:checkPhoneItemServer',
 }

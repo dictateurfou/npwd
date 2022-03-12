@@ -15,6 +15,7 @@ import { PromiseEventResp, PromiseRequest } from '../lib/PromiseNetEvents/promis
 import { emitNetTyped } from '../utils/miscUtils';
 import { mainLogger } from '../sv_logger';
 import { _TwitterDB } from '../twitter/twitter.db';
+const exp = global.exports;
 
 class CallsService {
   private callMap: Collection<string, ActiveCallRaw>;
@@ -185,6 +186,8 @@ class CallsService {
       },
       targetCallItem.transmitterSource,
     );
+    exp['pma-voice'].setPlayerCall(targetCallItem.receiverSource, channelId);
+    exp['pma-voice'].setPlayerCall(targetCallItem.transmitterSource, channelId);
   }
 
   async handleFetchCalls(

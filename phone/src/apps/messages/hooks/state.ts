@@ -12,24 +12,26 @@ import { MockMessageConversations } from '../utils/constants';
 
 const currentGroupId = atom({ key: 'currentGroupId', default: null });
 
+export async function loadConversations() {
+  try {
+    const resp = await fetchNui<ServerPromiseResp<MessageConversation[]>>(
+      MessageEvents.FETCH_MESSAGE_CONVERSATIONS,
+      undefined,
+      buildRespObj(MockMessageConversations),
+    );
+    return resp.data;
+  } catch (e) {
+    console.error(e);
+    return [];
+  }
+}
+
 export const messageState = {
   messageCoversations: atom<MessageConversation[]>({
     key: 'messageConversations',
     default: selector({
       key: 'defaultMessageConversation',
-      get: async () => {
-        try {
-          const resp = await fetchNui<ServerPromiseResp<MessageConversation[]>>(
-            MessageEvents.FETCH_MESSAGE_CONVERSATIONS,
-            undefined,
-            buildRespObj(MockMessageConversations),
-          );
-          return resp.data;
-        } catch (e) {
-          console.error(e);
-          return [];
-        }
-      },
+      get: loadConversations,
     }),
   }),
   filterValue: atom<string>({

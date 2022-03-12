@@ -1,5 +1,7 @@
+import { PhoneEvents } from '../../typings/phone';
 import { uuidv4 } from '../utils/fivem';
 import { ClUtils } from './client';
+import { sendPhoneEvent, sendSimEvent } from '../utils/messages';
 
 interface ISettings {
   promiseTimeout: number;
@@ -130,3 +132,8 @@ export const verifyExportArgType = (
       )}. Passed: ${passedArg}, Type: ${passedArgType})`,
     );
 };
+
+onNet(PhoneEvents.SET_NUMBER, function (number: string) {
+  sendSimEvent(PhoneEvents.SET_NUMBER, number);
+  sendPhoneEvent(PhoneEvents.RELOAD_STORE);
+});

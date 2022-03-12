@@ -19,6 +19,12 @@ exp('generatePhoneNumber', async () => {
   return num;
 });
 
+//for simcard usage
+exp('changeNumber', async (src: number, phoneNumber: string) => {
+  emitNet(PhoneEvents.SET_NUMBER, String(src), phoneNumber);
+  PlayerService.changePlayerNumber(src, phoneNumber);
+});
+
 // For multicharacter frameworks, we enable these events for
 // instantiating/deleting a player. The config option must be set to true
 // for these to be available

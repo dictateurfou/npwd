@@ -41,6 +41,19 @@ class _PlayerService {
     this.playersByIdentifier.delete(identifier);
     this.playersBySource.delete(source);
   }
+
+  /**
+   * Edit phone number for player (used for numberChange) not generic because property is private
+   * @param source
+   * @param number
+   */
+  editPlayerPhoneNumberFromMap(source: number, number: string) {
+    const player = this.playersBySource.get(source);
+    const identifier = player.getIdentifier();
+    player.setPhoneNumber(number);
+    this.playersByIdentifier.get(identifier).setPhoneNumber(number);
+  }
+
   /**
    * Returns the player instance for a given source
    * Will return null if no player is found online with that source
@@ -242,6 +255,10 @@ class _PlayerService {
     this.deletePlayerFromMaps(src);
     emitNet(PhoneEvents.SET_PLAYER_LOADED, src, false);
     playerLogger.info(`Unloaded NPWD Player, source: (${src})`);
+  }
+
+  async changePlayerNumber(src: number, number: string) {
+    this.editPlayerPhoneNumberFromMap(Number(src), number);
   }
 }
 
