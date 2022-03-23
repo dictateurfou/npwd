@@ -73,7 +73,7 @@ export class Player {
    * Get the stored phone number for a user
    **/
   public getPhoneNumber(): string {
-    return this._phoneNumber;
+    return String(this._phoneNumber);
   }
 
   /**

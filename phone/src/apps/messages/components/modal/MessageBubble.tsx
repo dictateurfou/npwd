@@ -2,7 +2,7 @@ import { Avatar, Box, IconButton, Paper, Typography } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { makeStyles } from '@mui/styles';
 import React, { useState } from 'react';
-import { Message } from '@typings/messages';
+import { Message, MessageEvents } from '@typings/messages';
 import StyledMessage from '../ui/StyledMessage';
 import { PictureResponsive } from '@ui/components/PictureResponsive';
 import { PictureReveal } from '@ui/components/PictureReveal';
@@ -11,6 +11,7 @@ import MessageBubbleMenu from './MessageBubbleMenu';
 import { useSetSelectedMessage } from '../../hooks/state';
 import MessageEmbed from '../ui/MessageEmbed';
 import { useContactActions } from '../../../contacts/hooks/useContactActions';
+import fetchNui from '@utils/fetchNui';
 
 const useStyles = makeStyles((theme) => ({
   mySms: {
@@ -47,9 +48,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const isImage = (url) => {
+const isImage = (url: string) => {
   return /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png|jpeg|gif)/g.test(url);
 };
+
+function isJson(str: string) {
+  if (typeof str !== 'string') return false;
+  try {
+    const result = JSON.parse(str);
+    const type = Object.prototype.toString.call(result);
+    return type === '[object Object]' || type === '[object Array]';
+  } catch (e) {
+    return false;
+  }
+}
+
+const isPosition = (str: string) => {
+  if (isJson(str) === true) {
+    const pos = JSON.parse(str);
+    if (typeof pos == 'object') {
+      if (pos.x !== undefined && pos.y !== undefined && pos.z !== undefined) {
+        return true;
+      }
+    }
+  }
+  return false;
+};
+
+function parsePos(str) {
+  const pos = JSON.parse(str);
+
+  return `${pos.x} , ${pos.y}, ${pos.z}`;
+}
 
 interface MessageBubbleProps {
   message: Message;
@@ -62,8 +92,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
 
   const setSelectedMessage = useSetSelectedMessage();
   const openMenu = () => {
-    setMenuOpen(true);
-    setSelectedMessage(message);
+    if (isPosition(message.message)) {
+      fetchNui(MessageEvents.SET_WAYPOINT, JSON.parse(message.message));
+    } else {
+      setMenuOpen(true);
+      setSelectedMessage(message);
+    }
   };
   const myNumber = useMyPhoneNumber();
   const isMine = message.author === myNumber;
@@ -91,16 +125,22 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message }) => {
           {message.is_embed ? (
             <MessageEmbed type={parsedEmbed.type} embed={parsedEmbed} isMine={isMine} />
           ) : (
-            <StyledMessage>
+            <StyledMessage onClick={() => openMenu()}>
               {isImage(message.message) ? (
                 <PictureReveal>
                   <PictureResponsive src={message.message} alt="message multimedia" />
                 </PictureReveal>
+              ) : isPosition(message.message) === true ? (
+                <>
+                  {'Position'}
+                  <br />
+                  {parsePos(message.message)}
+                </>
               ) : (
                 <>{message.message}</>
               )}
               {isMine && (
-                <IconButton color="primary" onClick={openMenu}>
+                <IconButton color="primary" onClick={() => openMenu()}>
                   <MoreVertIcon />
                 </IconButton>
               )}

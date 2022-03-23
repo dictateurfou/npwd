@@ -4,6 +4,7 @@ import {
   Message,
   MessageConversation,
   MessageEvents,
+  ParticipantEdit,
   PreDBConversation,
   PreDBMessage,
 } from '../../../typings/messages';
@@ -100,3 +101,13 @@ onNetPromise<number, void>(MessageEvents.SET_MESSAGE_READ, async (reqObj, resp) 
     messagesLogger.error(`Error occurred in set message read event (${src}), Error: ${e.message}`),
   );
 });
+
+onNetPromise<{ participantId: number; number: string }, boolean>(
+  MessageEvents.ADD_PARTICIPANT,
+  async (reqObj, resp) => {
+    const src = getSource();
+    MessagesService.handleAddParticipantToConversation(reqObj, resp).catch((e) =>
+      messagesLogger.error(`Error occurred in add participant event (${src}), Error: ${e.message}`),
+    );
+  },
+);

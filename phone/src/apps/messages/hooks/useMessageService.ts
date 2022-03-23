@@ -1,14 +1,18 @@
 import { useActiveMessageConversation } from './state';
 import { useNuiEvent } from 'fivem-nui-react-lib';
-import { Message, MessageConversation, MessageEvents } from '@typings/messages';
+import { Message, MessageConversation, MessageEvents, ParticipantEdit } from '@typings/messages';
 import { useMessageActions } from './useMessageActions';
 import { useCallback } from 'react';
 import { useMessageNotifications } from './useMessageNotifications';
 import { useLocation } from 'react-router';
 
 export const useMessagesService = () => {
-  const { updateLocalMessages, updateLocalConversations, setMessageReadState } =
-    useMessageActions();
+  const {
+    updateLocalMessages,
+    updateLocalConversations,
+    setMessageReadState,
+    editConversationParticipant,
+  } = useMessageActions();
   const { setNotification } = useMessageNotifications();
   const { pathname } = useLocation();
   const activeMessageConversation = useActiveMessageConversation();
@@ -46,6 +50,15 @@ export const useMessagesService = () => {
     [updateLocalConversations],
   );
 
+  const handleEditParticipantConv = useCallback(
+    (data: ParticipantEdit) => {
+      //data.convId
+      editConversationParticipant(data);
+    },
+    [editConversationParticipant],
+  );
+
+  useNuiEvent('MESSAGES', MessageEvents.EDIT_PARTICIPANT, handleEditParticipantConv);
   useNuiEvent('MESSAGES', MessageEvents.CREATE_MESSAGE_BROADCAST, handleMessageBroadcast);
   useNuiEvent('MESSAGES', MessageEvents.SEND_MESSAGE_SUCCESS, handleUpdateMessages);
   useNuiEvent('MESSAGES', MessageEvents.CREATE_MESSAGE_CONVERSATION_SUCCESS, handleAddConversation);

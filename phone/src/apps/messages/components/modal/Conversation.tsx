@@ -100,9 +100,9 @@ const Conversation: React.FC<IProps> = ({ activeMessageGroup, messages }) => {
                 loader={<CircularProgress />}
                 dataLength={messages.length}
               >
-                {messages.map((message) => {
-                  return <MessageBubble key={message.id} message={message} />;
-                })}
+                {messages.map((message) => (
+                  <MessageBubble key={message.id} message={message} />
+                ))}
               </InfiniteScroll>
             </div>
           </Box>

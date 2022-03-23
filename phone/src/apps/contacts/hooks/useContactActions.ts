@@ -48,7 +48,7 @@ export const useContactActions = (): UseContactsValue => {
         if (state !== 'hasValue') return null;
 
         for (const contact of contents) {
-          if (contact.number === number) return contact;
+          if (String(contact.number) === String(number)) return contact; //fix for most case but maybe is better if we use number alway and convert all but i have no time
         }
         return null;
       },

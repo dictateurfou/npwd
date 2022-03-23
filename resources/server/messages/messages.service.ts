@@ -8,6 +8,7 @@ import {
   MessageConversation,
   MessageEvents,
   MessagesRequest,
+  ParticipantEdit,
   PreDBConversation,
   PreDBMessage,
 } from '../../../typings/messages';
@@ -41,7 +42,7 @@ class _MessagesService {
       isGroupChat,*/
   async handleCreateMessageConversation(
     reqObj: PromiseRequest<PreDBConversation>,
-    resp: PromiseEventResp<MessageConversation>,
+    resp: PromiseEventResp<MessageConversation | number | boolean>,
   ) {
     const playerPhoneNumber = PlayerService.getPlayer(reqObj.source).getPhoneNumber();
     const conversation = reqObj.data;
@@ -49,36 +50,11 @@ class _MessagesService {
 
     const doesExist = await this.messagesDB.doesConversationExist(participants);
 
-    if (doesExist) {
-      //already exist (need refactor)
-      /*const playerHasConversation = await this.messagesDB.doesConversationExistForPlayer(
-        conversationList,
-        playerPhoneNumber,
-      );
-
-      if (playerHasConversation) {
-        return resp({
-          status: 'error',
-          errorMsg: 'MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE',
-        });
-      } else {
-        const conversationId = await this.messagesDB.addParticipantToConversation(
-          conversationList,
-          playerPhoneNumber,
-        );
-
-        const respData = {
-          id: conversationId,
-          label: conversation.conversationLabel,
-          conversationList,
-          isGroupChat: conversation.isGroupChat,
-        };
-
-        return resp({ status: 'ok', data: { ...respData, participants: [playerPhoneNumber] } });
-      }*/
+    if (doesExist !== false) {
       return resp({
         status: 'error',
         errorMsg: 'MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE',
+        data: doesExist,
       });
     }
 
@@ -164,7 +140,6 @@ class _MessagesService {
         },
       });
 
-      console.log('passe dabns handle message');
       // participantId is the participants phone number
       for (let participantNumber of participants) {
         participantNumber = String(participantNumber); // force string
@@ -227,11 +202,40 @@ class _MessagesService {
   ) {
     const phoneNumber = PlayerService.getPlayer(reqObj.source).getPhoneNumber();
     const conversationsId = reqObj.data.conversationsId;
-
     try {
-      for (const id of conversationsId) {
-        await this.messagesDB.deleteConversation(id, phoneNumber);
+      const participantConvList = [];
+      const deleteRequest = [];
+      const allConvDataReq = [];
+      for (const i in conversationsId) {
+        allConvDataReq.push(this.messagesDB.getConversationById(conversationsId[i]));
       }
+      const allConvDataResult = await Promise.all(allConvDataReq);
+      for (const i in conversationsId) {
+        if (allConvDataResult[i] !== null) {
+          deleteRequest.push(
+            this.messagesDB.deleteConversation(allConvDataResult[i].participantId, phoneNumber),
+          );
+        }
+      }
+      await Promise.all(deleteRequest);
+      for (const id of conversationsId) {
+        participantConvList.push(this.messagesDB.getParticipants(id));
+      }
+      const allParticipantConvList = await Promise.all(participantConvList);
+      for (const i in conversationsId) {
+        const participants = allParticipantConvList[i];
+        for (const number of participants) {
+          const player = PlayerService.getPlayerFromNumber(number);
+          if (player !== null && phoneNumber !== number) {
+            emitNetTyped<ParticipantEdit>(
+              MessageEvents.EDIT_PARTICIPANT,
+              { type: 'del', number: phoneNumber, convId: conversationsId[i] },
+              player.source,
+            );
+          }
+        }
+      }
+
       resp({ status: 'ok' });
     } catch (err) {
       resp({ status: 'error', errorMsg: err.message });
@@ -283,11 +287,57 @@ class _MessagesService {
             message: messageData.message,
           });
         }
-        console.log(conversation);
         await this.messagesDB.setMessageUnread(conversation.participantId, targetNumber);
       }
     } catch (err) {
       console.log(`Failed to emit message. Error: ${err.message}`);
+    }
+  }
+
+  async handleAddParticipantToConversation(
+    reqObj: PromiseRequest<{ participantId: number; number: string }>,
+    resp: PromiseEventResp<boolean>,
+  ) {
+    const data = reqObj.data;
+    await this.messagesDB.addParticipantToConversation(data.participantId, data.number);
+    const conv = await this.messagesDB.getConversationByParticipantId(data.participantId);
+    const allParticipants = conv.participants;
+    if (conv !== null) {
+      for (const v of allParticipants) {
+        if (String(data.number) !== String(v)) {
+          const player = PlayerService.getPlayerFromNumber(v);
+          if (player !== null) {
+            emitNetTyped<ParticipantEdit>(
+              MessageEvents.EDIT_PARTICIPANT,
+              { type: 'add', number: data.number, convId: conv.id },
+              player.source,
+            );
+          }
+        } else {
+          const player = PlayerService.getPlayerFromNumber(v);
+          if (player !== null) {
+            const convData = {
+              id: conv.id,
+              label: conv.label,
+              isGroupChat: conv.isGroupChat,
+              participantId: conv.participantId,
+              participants: allParticipants,
+            };
+            emitNetTyped<MessageConversation>(
+              MessageEvents.CREATE_MESSAGE_CONVERSATION_SUCCESS,
+              {
+                ...convData,
+              },
+              player.source,
+            );
+          }
+        }
+      }
+    }
+    if (conv !== null) {
+      resp({ status: 'ok', data: true });
+    } else {
+      resp({ status: 'ok', data: false });
     }
   }
 }

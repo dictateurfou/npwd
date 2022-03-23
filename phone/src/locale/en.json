@@ -231,7 +231,8 @@
       "NEW_MESSAGE_GROUP_SUBMIT": "Send",
       "INPUT_NAME_OR_NUMBER": "Search contacts or type number and press enter",
       "ACTIONS_TITLE": "Actions",
-      "ME": "Me"
+      "ME": "Me",
+      "SEND_POSITION": "Envoyer position"
     },
     "RELATIVE_TIME": {
       "future": "in %s",

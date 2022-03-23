@@ -26,6 +26,7 @@ type UseMessageAPIProps = {
   deleteConversation: (conversationIds: number[]) => void;
   fetchMessages: (conversationId: string, page: number) => void;
   setMessageRead: (participantId: number) => void;
+  addParticipantToConversation: (participantId: number, number: string) => void;
 };
 
 export const useMessageAPI = (): UseMessageAPIProps => {
@@ -141,17 +142,14 @@ export const useMessageAPI = (): UseMessageAPIProps => {
         },
       ).then((resp) => {
         if (resp.status !== 'ok') {
-          history.push('/messages');
-
           if (resp.errorMsg === 'MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE') {
-            return addAlert({
-              message: t('MESSAGES.FEEDBACK.MESSAGE_CONVERSATION_DUPLICATE'),
-              type: 'error',
-            });
+            history.push('/messages/conversations/' + resp.data);
+            return;
           }
 
+          history.push('/messages');
           return addAlert({
-            message: t('MESSAGE_CONVERSATION_CREATE_ONE_NUMBER_FAILED"', {
+            message: t('MESSAGE_CONVERSATION_CREATE_ONE_NUMBER_FAILED', {
               number: conversation.conversationLabel,
             }),
             type: 'error',
@@ -243,6 +241,17 @@ export const useMessageAPI = (): UseMessageAPIProps => {
     [setMessages, addAlert, t, history],
   );
 
+  const addParticipantToConversation = useCallback((participantId: number, number: string) => {
+    fetchNui<ServerPromiseResp<boolean>>(MessageEvents.ADD_PARTICIPANT, {
+      participantId,
+      number,
+    }).then((resp) => {
+      if (resp.status !== 'ok') {
+        console.log('participant added to conversation');
+      }
+    });
+  }, []);
+
   return {
     sendMessage,
     deleteMessage,
@@ -251,5 +260,6 @@ export const useMessageAPI = (): UseMessageAPIProps => {
     fetchMessages,
     sendEmbedMessage,
     setMessageRead,
+    addParticipantToConversation,
   };
 };

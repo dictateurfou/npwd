@@ -128,7 +128,6 @@ export const MessageModal = () => {
 
   let header = getLabelOrContact(activeMessageConversation, myPhoneNumber);
   // don't allow too many characters, it takes too much room
-  console.log(header); // cause number
   const truncatedHeader = `${header.slice(0, MAX_HEADER_CHARS).trim()}...`;
   header = header.length > MAX_HEADER_CHARS ? truncatedHeader : header;
 
@@ -147,9 +146,6 @@ export const MessageModal = () => {
 
   // FIXME: This is wrong :O
   const targetNumber = activeMessageConversation.participants;
-  console.log('-----------------------------------');
-  console.log(targetNumber);
-  console.log(activeMessageConversation);
   const doesContactExist = getConversationParticipant(activeMessageConversation.participants);
 
   const getNumberOfConv = () => {
@@ -177,6 +173,7 @@ export const MessageModal = () => {
           onClose={closeGroupModal}
           participants={activeMessageConversation.participants}
           addContact={handleAddContact}
+          participantId={activeMessageConversation.participantId}
         />
         {isGroupModalOpen && <Backdrop />}
         <Box

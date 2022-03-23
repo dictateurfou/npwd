@@ -84,6 +84,14 @@ class _PlayerService {
     return player;
   }
 
+  getPlayerFromNumber(number: string) {
+    const onlinePlayer = this.playersBySource.find(
+      (player: Player) => player.getPhoneNumber() === String(number),
+    );
+    if (onlinePlayer) return onlinePlayer;
+    return null;
+  }
+
   /**
    * Will return the given identifier from a phone number
    * @param phoneNumber - The phone number of the player

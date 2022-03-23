@@ -4,6 +4,8 @@ import {
   Message,
   MessageConversation,
   MessagesRequest,
+  PreDBConv,
+  PreDBParticipant,
 } from '../../../typings/messages';
 import { ResultSetHeader } from 'mysql2';
 
@@ -49,15 +51,15 @@ export class _MessagesDB {
                           npwd_messages.embed
                    FROM npwd_messages
                    WHERE conversation_id = ?
-                   ORDER BY id
+                   ORDER BY id DESC
                    LIMIT ? OFFSET ?`;
 
-    const [results] = await DbInterface._rawExec(query, [
+    const results = await DbInterface.fetch<Message[]>(query, [
       dto.conversationId,
       MESSAGES_PER_PAGE,
       offset,
     ]);
-    return <Message[]>results;
+    return results.reverse();
   }
 
   async createConversation(
@@ -93,20 +95,35 @@ export class _MessagesDB {
     return [conversationId, participantId];
   }
 
-  async addParticipantToConversation(conversationList: string, phoneNumber: string) {
-    const conversationId = await this.getConversationId(conversationList);
+  async checkIfHaveParticipant(participantId: number, number: string) {
+    const query = `SELECT * FROM npwd_messages_participants WHERE id = ? AND number = ?`;
+    const rslt = await DbInterface.fetch<PreDBParticipant[]>(query, [participantId, number]);
+    if (rslt[0] !== undefined) {
+      return true;
+    }
+    return false;
+  }
 
+  async addParticipantToConversation(participantId: number, number: string) {
     const participantQuery = `INSERT INTO npwd_messages_participants (id, number)
                               VALUES (?, ?)`;
+    const check = await this.checkIfHaveParticipant(participantId, number);
+    if (check == false) {
+      await DbInterface.insert(participantQuery, [participantId, number]);
+    }
+  }
 
-    await DbInterface._rawExec(participantQuery, [conversationId, phoneNumber]);
-
-    return conversationId;
+  async getParticipantFromConv(participantId: number) {
+    const participantQuery = 'SELECT * FROM npwd_messages_participants WHERE id = ?';
+    const rslt = await DbInterface.fetch<PreDBParticipant[]>(participantQuery, [participantId]);
+    const ret = [];
+    for (const v of rslt) {
+      ret.push(String(v.number));
+    }
+    return rslt;
   }
 
   async createMessage(dto: CreateMessageDTO) {
-    console.log('createMessageDTO', dto);
-
     const query = `INSERT INTO npwd_messages (message, user_identifier, conversation_id, author, is_embed, embed)
                    VALUES (?, ?, ?, ?, ?, ?)`;
 
@@ -152,13 +169,13 @@ export class _MessagesDB {
   async deleteConversation(conversationId: number, phoneNumber: string) {
     const query = `DELETE
                    FROM npwd_messages_participants
-                   WHERE conversation_id = ?
+                   WHERE id = ?
                      AND number = ?`;
 
     await DbInterface._rawExec(query, [conversationId, phoneNumber]);
   }
 
-  async doesConversationExist(participants: Array<string>): Promise<boolean> {
+  async doesConversationExist(participants: Array<string>): Promise<boolean | number> {
     const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants, COUNT(*) as count
                           FROM npwd_messages_participants
                           INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
@@ -172,7 +189,7 @@ export class _MessagesDB {
     for (const v of result) {
       const participantsConv = JSON.parse(v.participants);
       if (checker(participants, participantsConv) == true) {
-        return true;
+        return v.id;
       }
     }
     return false;
@@ -214,15 +231,55 @@ export class _MessagesDB {
     return false;
   }
   // misc stuff
-  async getConversationId(participantId: string): Promise<number> {
-    const query = `SELECT id
-                   FROM npwd_messages_conversations
-                   WHERE participants = ?`;
 
-    const [results] = await DbInterface._rawExec(query, [participantId]);
-    const result = <any>results;
+  async getConversationByParticipantId(participantId: number): Promise<MessageConversation | null> {
+    const query = `SELECT npwd_messages_conversations.id,
+                    CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants,
+                    COUNT(*) as count,
+                    npwd_messages_participants.unread_count as unreadCount,
+                    npwd_messages_participants.id as participantId,
+                    npwd_messages_conversations.is_group_chat as isGroupChat,
+                    npwd_messages_conversations.label, npwd_messages_participants.number
+                    FROM npwd_messages_participants
+                    INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
+                    WHERE npwd_messages_participants.id = ? GROUP BY npwd_messages_participants.id`;
 
-    return result[0].id;
+    const result = await DbInterface.fetch<any>(query, [participantId]);
+    if (result[0] !== undefined) {
+      result[0].participants = JSON.parse(result[0].participants);
+      for (let v of result[0].participants) {
+        v = String(v);
+      }
+      return result[0];
+    }
+    return null;
+  }
+
+  async getConversationId(participantId: number): Promise<number | null> {
+    const result = await this.getConversationByParticipantId(participantId);
+    if (result !== null) {
+      return result.id;
+    }
+    return null;
+  }
+
+  async getConversationById(convId: number): Promise<MessageConversation | null> {
+    const query = `SELECT * , participants as participantId FROM npwd_messages_conversations WHERE id = ?`;
+    const result = await DbInterface.fetch<any>(query, [convId]);
+    if (result[0] !== undefined) {
+      return result[0];
+    }
+    return null;
+  }
+
+  async getParticipants(participantId: number): Promise<string[]> {
+    const query = `SELECT * FROM npwd_messages_participants WHERE id = ?`;
+    const result = await DbInterface.fetch<PreDBParticipant[]>(query, [participantId]);
+    const rslt = [];
+    for (const v of result) {
+      rslt.push(String(v.number));
+    }
+    return rslt;
   }
 }
 

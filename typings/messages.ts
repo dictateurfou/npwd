@@ -34,6 +34,12 @@ export interface CreateMessageDTO {
   embed: any;
 }
 
+export interface PreDBParticipant {
+  id: number;
+  number: string;
+  unread_count: number;
+}
+
 export interface MessageConversation {
   id: number;
   label: string;
@@ -141,6 +147,12 @@ export interface EmitMessageExportCtx {
   message: string;
 }
 
+export interface ParticipantEdit {
+  type: string;
+  number: string;
+  convId: number;
+}
+
 export enum MessageEvents {
   FETCH_MESSAGE_CONVERSATIONS = 'npwd:fetchMessageGroups',
   FETCH_MESSAGE_GROUPS_SUCCESS = 'npwd:fetchMessageGroupsSuccess',
@@ -162,4 +174,8 @@ export enum MessageEvents {
   CREATE_MESSAGE_BROADCAST = 'npwd:createMessagesBroadcast',
   SET_MESSAGE_READ = 'npwd:setReadMessages',
   DELETE_CONVERSATION = 'nwpd:deleteConversation',
+  ADD_PARTICIPANT = 'npwd:addParticipantToConv',
+  EDIT_PARTICIPANT = 'npwd:editParticipant',
+  GET_POSITION = 'npwd:messageGetPosition',
+  SET_WAYPOINT = 'npwd:messageSetWaypoint',
 }

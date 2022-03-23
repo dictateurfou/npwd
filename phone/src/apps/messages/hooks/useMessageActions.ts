@@ -1,6 +1,6 @@
 import { messageState, useSetMessageConversations, useSetMessages } from './state';
 import { useCallback } from 'react';
-import { Message, MessageConversation } from '@typings/messages';
+import { Message, MessageConversation, ParticipantEdit } from '@typings/messages';
 import { useRecoilValueLoadable } from 'recoil';
 import { useContactActions } from '../../contacts/hooks/useContactActions';
 import { useMyPhoneNumber } from '@os/simcard/hooks/useMyPhoneNumber';
@@ -14,6 +14,7 @@ interface MessageActionProps {
   setMessageReadState: (participantId: number, unreadCount: number) => void;
   getLabelOrContact: (messageConversation: MessageConversation, number: string) => string;
   getConversationParticipant: (participants: string[]) => Contact | null;
+  editConversationParticipant: (data: ParticipantEdit) => void;
 }
 
 export const useMessageActions = (): MessageActionProps => {
@@ -35,11 +36,11 @@ export const useMessageActions = (): MessageActionProps => {
 
   const setMessageReadState = useCallback(
     (participantId: number, unreadCount: number) => {
-      console.log(participantId);
+      const find = conversations.findIndex((element) => element.participantId === participantId); //because if update later or anithing if you send event it break phone if convo d'osnt exist
+      if (find === -1) return;
       setMessageConversation((curVal) =>
         curVal.map((message: MessageConversation) => {
           if (message.participantId === participantId) {
-            console.log('hello');
             return {
               ...message,
               unreadCount: unreadCount,
@@ -77,10 +78,10 @@ export const useMessageActions = (): MessageActionProps => {
       if (conversationLoading !== 'hasValue') return;
 
       if (!conversations.length) return;
-
-      setMessageConversation((curVal) =>
-        [...curVal].filter((conversation) => !conversationsId.includes(conversation.id)),
+      const newVal = conversations.filter(
+        (conversation) => !conversationsId.includes(conversation.id),
       );
+      setMessageConversation(newVal); //before filter is in function (itterator but its buggy and doesn't really delete convo on var idk for what because on template refresh work)
     },
     [setMessageConversation, conversationLoading, conversations],
   );
@@ -88,7 +89,8 @@ export const useMessageActions = (): MessageActionProps => {
   const updateLocalMessages = useCallback(
     (messageDto: Message) => {
       if (messageLoading !== 'hasValue') return;
-
+      const find = conversations.findIndex((element) => element.id === messageDto.conversation_id);
+      if (find === -1) return; //because if update later or anithing if you send event it break phone if convo d'osnt exist
       setMessages((currVal) => [
         ...currVal,
         {
@@ -101,7 +103,7 @@ export const useMessageActions = (): MessageActionProps => {
         },
       ]);
     },
-    [messageLoading, setMessages],
+    [messageLoading, setMessages, conversations],
   );
 
   const deleteLocalMessage = useCallback(
@@ -120,6 +122,40 @@ export const useMessageActions = (): MessageActionProps => {
     [getContactByNumber, myPhoneNumber],
   );
 
+  const editConversationParticipant = useCallback(
+    (data: ParticipantEdit) => {
+      const participantId = data.convId;
+      setMessageConversation((curVal) =>
+        curVal.map((message: MessageConversation) => {
+          if (message.participantId === participantId) {
+            const participants = [...message.participants];
+            if (data.type === 'add') {
+              if (!message.participants.includes(String(data.number))) {
+                participants.push(String(data.number)); //idk push cause error in console maybe due to recoil (recoil is shit) vue have better store xD
+              }
+            }
+
+            if (data.type === 'del') {
+              if (message.participants.includes(String(data.number))) {
+                const index = message.participants.indexOf(String(data.number));
+                if (index !== -1) {
+                  participants.splice(index, 1);
+                }
+              }
+            }
+            return {
+              ...message,
+              participants: participants,
+            };
+          }
+
+          return message;
+        }),
+      );
+    },
+    [setMessageConversation],
+  );
+
   return {
     updateLocalConversations,
     removeLocalConversation,
@@ -128,5 +164,6 @@ export const useMessageActions = (): MessageActionProps => {
     setMessageReadState,
     getLabelOrContact,
     getConversationParticipant,
+    editConversationParticipant,
   };
 };

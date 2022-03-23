@@ -137,7 +137,6 @@ const takePhoto = () =>
             const fileData = parsedData.files[0];
             const resp = await ClUtils.emitNetPromise(PhotoEvents.UPLOAD_PHOTO, fileData.url);
             res(resp);
-            console.log(resp);
           } else {
           }
         } catch (e) {

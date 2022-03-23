@@ -224,7 +224,9 @@
       "NEW_MESSAGE_GROUP_SUBMIT": "Envoyer",
       "INPUT_NAME_OR_NUMBER": "Rechercher des contacts ou tapez un numéro et appuyez sur Entrée",
       "ACTIONS_TITLE": "Actions",
-      "ME": "Moi"
+      "ME": "Moi",
+      "CONTACT_OPTION": "Ajouter un contact",
+      "SEND_POSITION": "Envoyer position"
     },
     "RELATIVE_TIME": {
       "future": "dans %s",
