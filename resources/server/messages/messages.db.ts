@@ -166,13 +166,23 @@ export class _MessagesDB {
     await DbInterface._rawExec(query, [message.id]);
   }
 
-  async deleteConversation(conversationId: number, phoneNumber: string) {
+  async deleteConversation(participantId: number, phoneNumber: string) {
     const query = `DELETE
                    FROM npwd_messages_participants
                    WHERE id = ?
                      AND number = ?`;
 
-    await DbInterface._rawExec(query, [conversationId, phoneNumber]);
+    await DbInterface._rawExec(query, [participantId, phoneNumber]);
+  }
+
+  async deleteConversationMessages(convId: number) {
+    const query = `DELETE FROM npwd_messages WHERE conversation_id = ?`;
+    await DbInterface.exec(query, [convId]);
+  }
+
+  async deleteConversationDb(convId: number) {
+    const query = `DELETE FROM npwd_messages_conversations WHERE id = ?`;
+    await DbInterface.exec(query, [convId]);
   }
 
   async doesConversationExist(participants: Array<string>): Promise<boolean | number> {

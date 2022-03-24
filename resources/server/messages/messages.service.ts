@@ -224,14 +224,36 @@ class _MessagesService {
       const allParticipantConvList = await Promise.all(participantConvList);
       for (const i in conversationsId) {
         const participants = allParticipantConvList[i];
+
         for (const number of participants) {
           const player = PlayerService.getPlayerFromNumber(number);
-          if (player !== null && phoneNumber !== number) {
-            emitNetTyped<ParticipantEdit>(
-              MessageEvents.EDIT_PARTICIPANT,
-              { type: 'del', number: phoneNumber, convId: conversationsId[i] },
-              player.source,
+          let requireDelete = false;
+          if (participants.length <= 1) {
+            //check for delete if have no people on conv
+            await this.messagesDB.deleteConversation(
+              allConvDataResult[i].participantId,
+              String(number),
             );
+            await this.messagesDB.deleteConversationDb(conversationsId[i]);
+            await this.messagesDB.deleteConversationMessages(conversationsId[i]);
+            requireDelete = true;
+          }
+
+          if (player !== null && String(phoneNumber) !== String(number)) {
+            if (requireDelete === true) {
+              console.log(`send event DELETE CONV WHITOUT PROXY to ${player.source}`);
+              emitNetTyped<any>(
+                MessageEvents.DELETE_CONV_WITHOUT_PROXY,
+                conversationsId[i],
+                player.source,
+              );
+            } else {
+              emitNetTyped<ParticipantEdit>(
+                MessageEvents.EDIT_PARTICIPANT,
+                { type: 'del', number: phoneNumber, convId: conversationsId[i] },
+                player.source,
+              );
+            }
           }
         }
       }

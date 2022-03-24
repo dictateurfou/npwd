@@ -12,6 +12,7 @@ export const useMessagesService = () => {
     updateLocalConversations,
     setMessageReadState,
     editConversationParticipant,
+    removeLocalConversation,
   } = useMessageActions();
   const { setNotification } = useMessageNotifications();
   const { pathname } = useLocation();
@@ -58,6 +59,14 @@ export const useMessagesService = () => {
     [editConversationParticipant],
   );
 
+  const handleDeleteConv = useCallback(
+    (convId: number) => {
+      removeLocalConversation([convId]);
+    },
+    [removeLocalConversation],
+  );
+
+  useNuiEvent('MESSAGES', MessageEvents.DELETE_CONV_WITHOUT_PROXY, handleDeleteConv);
   useNuiEvent('MESSAGES', MessageEvents.EDIT_PARTICIPANT, handleEditParticipantConv);
   useNuiEvent('MESSAGES', MessageEvents.CREATE_MESSAGE_BROADCAST, handleMessageBroadcast);
   useNuiEvent('MESSAGES', MessageEvents.SEND_MESSAGE_SUCCESS, handleUpdateMessages);

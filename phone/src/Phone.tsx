@@ -50,8 +50,8 @@ function Phone() {
   usePhoneService();
   useSimcardService();
   useTwitterService();
-  useMarketplaceService();
-  useBankService();
+  //useMarketplaceService();
+  //useBankService();
   useMessagesService();
   useContactsListener();
   useNoteListener();

@@ -34,6 +34,10 @@ onNet(MessageEvents.CREATE_MESSAGE_CONVERSATION_SUCCESS, (result: MessageConvers
   sendMessageEvent(MessageEvents.CREATE_MESSAGE_CONVERSATION_SUCCESS, result);
 });
 
+onNet(MessageEvents.DELETE_CONV_WITHOUT_PROXY, (convId: number) => {
+  sendMessageEvent(MessageEvents.DELETE_CONV_WITHOUT_PROXY, convId);
+});
+
 RegisterNuiCB<VectorPtr>(MessageEvents.GET_POSITION, async (data, cb) => {
   const [x, y, z] = GetEntityCoords(PlayerPedId(), false);
   cb({ x, y, z });

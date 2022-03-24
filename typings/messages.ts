@@ -178,4 +178,5 @@ export enum MessageEvents {
   EDIT_PARTICIPANT = 'npwd:editParticipant',
   GET_POSITION = 'npwd:messageGetPosition',
   SET_WAYPOINT = 'npwd:messageSetWaypoint',
+  DELETE_CONV_WITHOUT_PROXY = 'npwd:deleteConvWithoutProxy', //because DELETE_CONV is used with proxy for server callback :'(
 }
