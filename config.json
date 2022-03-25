@@ -43,7 +43,7 @@
     ]
   },
   "twitter": {
-    "showNotifications": true,
+    "showNotifications": false,
     "generateProfileNameFromUsers": true,
     "allowEditableProfileName": true,
     "allowDeleteTweets": true,

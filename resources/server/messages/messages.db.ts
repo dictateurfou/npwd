@@ -16,26 +16,23 @@ export class _MessagesDB {
 
   async getConversations(phoneNumber: string): Promise<MessageConversation[]> {
     //we have multiple option for opti request (better database architecture work with inner join and json one to many) or add limit on IN SELECT
-    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants,
-                          npwd_messages_participants.unread_count as unreadCount,
-                          npwd_messages_participants.id as participantId,
-                          npwd_messages_conversations.is_group_chat as isGroupChat,
-                          npwd_messages_conversations.label, npwd_messages_participants.number
-                          FROM npwd_messages_participants
-                          INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
-                          WHERE npwd_messages_participants.id
-                          IN (SELECT npwd_messages_conversations.participants
-                          FROM npwd_messages_conversations
-                          INNER JOIN npwd_messages_participants ON npwd_messages_participants.id = npwd_messages_conversations.participants
-                          WHERE number = ?) GROUP BY npwd_messages_conversations.id`;
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(CONCAT('"',npwd_messages_participants.number),'"'),']') AS participants,
+                        npwd_messages_participants.unread_count as unreadCount,
+                        npwd_messages_participants.id as participantId,
+                        npwd_messages_conversations.is_group_chat as isGroupChat,
+                        npwd_messages_conversations.label, npwd_messages_participants.number
+                        FROM npwd_messages_participants
+                        INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
+                        WHERE npwd_messages_participants.id
+                        IN (SELECT npwd_messages_conversations.participants
+                        FROM npwd_messages_conversations
+                        INNER JOIN npwd_messages_participants ON npwd_messages_participants.id = npwd_messages_conversations.participants
+                        WHERE number = ?) GROUP BY npwd_messages_conversations.id ORDER BY id DESC`;
 
     const [results] = await DbInterface._rawExec(query, [phoneNumber]);
     //console.log(results);
     for (const v of <MessageConversation[]>results) {
       v.participants = JSON.parse(String(v.participants));
-      for (let v2 of v.participants) {
-        v2 = v2.toString();
-      }
     }
     return <MessageConversation[]>results;
   }
@@ -186,7 +183,7 @@ export class _MessagesDB {
   }
 
   async doesConversationExist(participants: Array<string>): Promise<boolean | number> {
-    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants, COUNT(*) as count
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(CONCAT('"',npwd_messages_participants.number),'"'),']') as participants, COUNT(*) as count
                           FROM npwd_messages_participants
                           INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
                           WHERE npwd_messages_participants.id GROUP BY npwd_messages_participants.id HAVING COUNT(*) = ?`;
@@ -222,7 +219,7 @@ export class _MessagesDB {
   }
 
   async getConversationByParticipant(participants: string[]) {
-    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants, COUNT(*) as count
+    const query = `SELECT npwd_messages_conversations.id, CONCAT('[',GROUP_CONCAT(CONCAT('"',npwd_messages_participants.number),'"'),']') as participants, COUNT(*) as count
                           FROM npwd_messages_participants
                           INNER JOIN npwd_messages_conversations ON npwd_messages_conversations.participants = npwd_messages_participants.id
                           WHERE npwd_messages_participants.id GROUP BY npwd_messages_participants.id HAVING COUNT(*) = ?`;
@@ -244,7 +241,7 @@ export class _MessagesDB {
 
   async getConversationByParticipantId(participantId: number): Promise<MessageConversation | null> {
     const query = `SELECT npwd_messages_conversations.id,
-                    CONCAT('[',GROUP_CONCAT(npwd_messages_participants.number),']') as participants,
+                    CONCAT('[',GROUP_CONCAT(CONCAT('"',npwd_messages_participants.number),'"'),']') as participants,
                     COUNT(*) as count,
                     npwd_messages_participants.unread_count as unreadCount,
                     npwd_messages_participants.id as participantId,
