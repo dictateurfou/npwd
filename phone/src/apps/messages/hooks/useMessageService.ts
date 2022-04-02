@@ -11,6 +11,7 @@ export const useMessagesService = () => {
     updateLocalMessages,
     updateLocalConversations,
     setMessageReadState,
+    getMessageReadState,
     editConversationParticipant,
     removeLocalConversation,
   } = useMessageActions();
@@ -18,12 +19,21 @@ export const useMessagesService = () => {
   const { pathname } = useLocation();
   const activeMessageConversation = useActiveMessageConversation();
 
-  const handleMessageBroadcast = ({ conversationName, conversation_id, message }) => {
+  const handleMessageBroadcast = ({
+    conversationName,
+    conversation_id,
+    message,
+    participantId,
+  }) => {
     if (pathname.includes(`/messages/conversations/${conversation_id}`)) {
       return;
     }
     // Set the current unread count to 1, when they click it will be removed
-    setMessageReadState(conversation_id, 1);
+    const readNumber = getMessageReadState(participantId);
+    if (readNumber !== false && readNumber !== true) {
+      const newnum = readNumber + 1;
+      setMessageReadState(participantId, newnum);
+    }
     setNotification({ conversationName, conversationId: conversation_id, message });
   };
 

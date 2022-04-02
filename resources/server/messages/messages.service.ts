@@ -164,6 +164,7 @@ class _MessagesService {
               message: messageData.message,
               is_embed: messageData.is_embed,
               embed: messageData.embed,
+              participantId: messageData.participantId,
             });
           }
         }

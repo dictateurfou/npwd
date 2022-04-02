@@ -12,6 +12,7 @@ interface MessageActionProps {
   updateLocalMessages: (messageDto: Message) => void;
   deleteLocalMessage: (messageId: number) => void;
   setMessageReadState: (participantId: number, unreadCount: number) => void;
+  getMessageReadState: (participantId: number) => number | boolean;
   getLabelOrContact: (messageConversation: MessageConversation, number: string) => string;
   getConversationParticipant: (participants: string[]) => Contact | null;
   editConversationParticipant: (data: ParticipantEdit) => void;
@@ -51,7 +52,16 @@ export const useMessageActions = (): MessageActionProps => {
         }),
       );
     },
-    [setMessageConversation],
+    [setMessageConversation, conversations],
+  );
+
+  const getMessageReadState = useCallback(
+    (participantId: number): number | boolean => {
+      const find = conversations.findIndex((element) => element.participantId === participantId); //because if update later or anithing if you send event it break phone if convo d'osnt exist
+      if (find === -1) return false;
+      return conversations[find].unreadCount;
+    },
+    [conversations],
   );
 
   const getLabelOrContact = useCallback(
@@ -165,5 +175,6 @@ export const useMessageActions = (): MessageActionProps => {
     getLabelOrContact,
     getConversationParticipant,
     editConversationParticipant,
+    getMessageReadState,
   };
 };
