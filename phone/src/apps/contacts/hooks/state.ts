@@ -19,6 +19,12 @@ const defaultContact = [
     number: '912',
     avatar: null,
   },
+  {
+    id: 988658,
+    display: 'bcso',
+    number: '913',
+    avatar: null,
+  },
 ];
 
 export async function loadContact() {
